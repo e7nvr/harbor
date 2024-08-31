@@ -1,5 +1,5 @@
 import {throttle} from 'lodash';
-
+import { DetectedObject } from '@tensorflow-models/coco-ssd';
 
 // Define la región de detección
 let detectionRegion = {
@@ -18,7 +18,19 @@ export const setDetectionRegion = (canvasWidth: number, canvasHeight: number) =>
     };
 };
 
-export const renderPredictions = (predictions: any, ctx: any) => {
+// Definir una interfaz para el historial de detecciones
+interface DetectionHistory {
+    position: "inside" | "partially" | "outside";
+    timestamp: number;
+}
+
+// Configuración
+const HISTORY_SIZE = 20; // Número de detecciones a considerar
+const ALERT_THRESHOLD = 0.9; // Porcentaje de detecciones fuera/parciales para alertar
+
+let detectionHistory: DetectionHistory[] = [];
+
+export const renderPredictions = (predictions: DetectedObject[], ctx: any) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     // Set detection region if not set
@@ -38,6 +50,13 @@ export const renderPredictions = (predictions: any, ctx: any) => {
         const text = "Person " + (prediction.score * 100).toFixed(2) + "%";
 
         const position = getPersonPosition(x, y, width, height);
+        
+        // Añadir la detección actual al historial
+        addToHistory(position);
+
+        // Decidir si alertar basado en el historial
+        const shouldAlert = evaluateHistory();
+
         let color;
         switch (position) {
             case "inside":
@@ -67,7 +86,7 @@ export const renderPredictions = (predictions: any, ctx: any) => {
         ctx.fillStyle = "#000000";
         ctx.fillText(text, x, y);
 
-        if (position !== "inside") {
+        if (shouldAlert) {
             playAlarm(); // Alerta cuando la persona no está completamente dentro
         }
     });
@@ -95,6 +114,23 @@ function getPersonPosition(x: number, y: number, width: number, height: number):
     }
 }
 
+function addToHistory(position: "inside" | "partially" | "outside") {
+    detectionHistory.push({ position, timestamp: Date.now() });
+    if (detectionHistory.length > HISTORY_SIZE) {
+        detectionHistory.shift();
+    }
+}
+
+function evaluateHistory(): boolean {
+    if (detectionHistory.length < HISTORY_SIZE) return false;
+
+    const nonInsideCount = detectionHistory.filter(
+        entry => entry.position !== "inside"
+    ).length;
+
+    return (nonInsideCount / HISTORY_SIZE) >= ALERT_THRESHOLD;
+}
+
 function isInDetectionRegion(x: number, y: number, width: number, height: number): boolean {
     return (
         x < detectionRegion.x + detectionRegion.width &&
@@ -103,7 +139,6 @@ function isInDetectionRegion(x: number, y: number, width: number, height: number
         y + height > detectionRegion.y
     );
 }
-
 
 let isAlarmPlaying = false;
 
@@ -117,8 +152,6 @@ const playAlarm = throttle(() => {
         };
     }
 }, 2000);
-
-
 
 function renderPredictions0(detectedObjects: DetectedObject[], context: any) {
     detectedObjects.forEach((prediction) => {
