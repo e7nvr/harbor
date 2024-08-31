@@ -9,16 +9,14 @@ import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 
 import Webcam from "react-webcam";
-import {renderPredictions} from "@/features/aiod/utils/canvas-utils";
+import {renderPredictions, setDetectionRegion} from "@/features/aiod/utils/canvas-utils";
 
 const ObjectDetection = () => {
 
     const webcamRef = useRef();
     const canvasRef = useRef();
     const [isLoaded, setIsLoaded] = useState(false);
-    const [isVideSizeSet, setIsVideoSizeSet] = useState(false);
-
-
+    const [dimensions, setDimensions] = useState({ width: 1920, height: 1080 });
 
     async function detect(net: ObjectDetection) {
         if (
@@ -27,14 +25,16 @@ const ObjectDetection = () => {
             webcamRef.current?.video?.readyState === 4
         ) {
             const video = webcamRef.current.video;
-            const width = video.videoWidth;
-            const height = video.videoHeight;
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
 
-            webcamRef.current.video.width = width;
-            webcamRef.current.video.heigth = height;
+            webcamRef.current.video.width = videoWidth;
+            webcamRef.current.video.height = videoHeight;
 
-            canvasRef.current.width = width;
-            canvasRef.current.height = height;
+            canvasRef.current.width = videoWidth;
+            canvasRef.current.height = videoHeight;
+
+            setDetectionRegion(videoWidth, videoHeight);
 
             const detectedObjects = await net.detect(
                 webcamRef.current.video,
@@ -75,14 +75,31 @@ const ObjectDetection = () => {
     }
 
     useEffect(() => {
-        console.log("useEffect");
+        const setupCamera = async () => {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 3840 },  // 4K width
+                    height: { ideal: 2160 }, // 4K height
+                },
+            });
+            if (webcamRef.current) {
+                webcamRef.current.video.srcObject = stream;
+                webcamRef.current.video.onloadedmetadata = () => {
+                    setDimensions({
+                        width: webcamRef.current.video.videoWidth,
+                        height: webcamRef.current.video.videoHeight
+                    });
+                };
+            }
+        };
+
+        setupCamera();
         runCoco();
-        showVideo();
 
         return () => {
-            console.log("cleanup");
-        }
-    }, [])
+            // Cleanup code
+        };
+    }, []);
 
     if (!isLoaded) {
         return (
@@ -102,16 +119,18 @@ const ObjectDetection = () => {
                 {/* webcam */}
                 <Webcam
                     ref={webcamRef}
-                    className={cn("rounded-md lg:h-[720p] content-center ")}
-                    width={1280} height={720}
+                    className={cn("rounded-md")}
+                    width={dimensions.width}
+                    height={dimensions.height}
                     screenshotFormat="image/jpeg"
                     audio={false} muted
                 />
                 {/* canvas */}
                 <canvas
                     ref={canvasRef}
-                    className={cn("absolute rounded-md top-0 lg:h-[720p] border-2 border-blue-500")}
-                    width="1280" height="720"
+                    className={cn("absolute rounded-md ")}
+                    width={dimensions.width}
+                    height={dimensions.height}
                 />
             </div>
         </div>

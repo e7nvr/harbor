@@ -2,54 +2,97 @@ import {throttle} from 'lodash';
 
 
 // Define la región de detección
-const detectionRegion = {
-  x: 100,
-  y: 100,
-  width: 400,
-  height: 300
+let detectionRegion = {
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0
+};
+
+export const setDetectionRegion = (canvasWidth: number, canvasHeight: number) => {
+    detectionRegion = {
+        x: 0,
+        y: 0,
+        width: canvasWidth / 2,
+        height: canvasHeight
+    };
 };
 
 export const renderPredictions = (predictions: any, ctx: any) => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    const font = "16px sans-serif";
-    ctx.font = font;
-    ctx.textBaseline = "top";
+    // Set detection region if not set
+    if (detectionRegion.width === 0) {
+        setDetectionRegion(ctx.canvas.width, ctx.canvas.height);
+    }
 
-    // Dibuja la región de detección
+    // Draw detection region
     ctx.strokeStyle = "#00FF00";
     ctx.lineWidth = 2;
     ctx.strokeRect(detectionRegion.x, detectionRegion.y, detectionRegion.width, detectionRegion.height);
 
     predictions.forEach((prediction) => {
-        const [x, y, width, height] = prediction.bbox;
-        const text = prediction.class + " " + (prediction.score * 100).toFixed(2) + "%";
-        const isPerson = prediction.class === "person";
+        if (prediction.class !== "person") return; // Ignorar objetos que no sean personas
 
-        // Draw the bounding box.
-        ctx.strokeStyle = isPerson ? "#00FFFF" : "#FF0000";
+        const [x, y, width, height] = prediction.bbox;
+        const text = "Person " + (prediction.score * 100).toFixed(2) + "%";
+
+        const position = getPersonPosition(x, y, width, height);
+        let color;
+        switch (position) {
+            case "inside":
+                color = "#00FF00"; // Verde
+                break;
+            case "partially":
+                color = "#FFFF00"; // Amarillo
+                break;
+            case "outside":
+                color = "#FF0000"; // Rojo
+                break;
+        }
+
+        // Dibujar el bounding box
+        ctx.strokeStyle = color;
         ctx.lineWidth = 4;
         ctx.strokeRect(x, y, width, height);
 
-        // fill the bounding box
-        ctx.fillStyle = isPerson ? "#00FFFF" : "#FF0000";
-        ctx.fillText(text, x, y);
-
-        // Draw the label background.
-        ctx.fillStyle = isPerson ? "#00FFFF" : "#FF0000";
+        // Dibujar el fondo del texto
+        ctx.fillStyle = color;
         const textWidth = ctx.measureText(text).width;
+        let font = "16px Arial";
         const textHeight = parseInt(font, 10);
         ctx.fillRect(x, y, textWidth + 4, textHeight + 4);
 
-        // Draw the text last to ensure it's on top.
+        // Dibujar el texto
         ctx.fillStyle = "#000000";
         ctx.fillText(text, x, y);
 
-        if (isPerson && isInDetectionRegion(x, y, width, height)) {
-            // Play the alarm sound only if person is in the detection region
-            playAlarm();
+        if (position !== "inside") {
+            playAlarm(); // Alerta cuando la persona no está completamente dentro
         }
     });
+}
+
+function getPersonPosition(x: number, y: number, width: number, height: number): "inside" | "partially" | "outside" {
+    const personLeft = x;
+    const personRight = x + width;
+    const personTop = y;
+    const personBottom = y + height;
+
+    const regionLeft = detectionRegion.x;
+    const regionRight = detectionRegion.x + detectionRegion.width;
+    const regionTop = detectionRegion.y;
+    const regionBottom = detectionRegion.y + detectionRegion.height;
+
+    if (personLeft >= regionLeft && personRight <= regionRight &&
+        personTop >= regionTop && personBottom <= regionBottom) {
+        return "inside";
+    } else if (personRight < regionLeft || personLeft > regionRight ||
+               personBottom < regionTop || personTop > regionBottom) {
+        return "outside";
+    } else {
+        return "partially";
+    }
 }
 
 function isInDetectionRegion(x: number, y: number, width: number, height: number): boolean {
