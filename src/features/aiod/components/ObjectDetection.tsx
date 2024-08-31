@@ -10,6 +10,8 @@ import '@tensorflow/tfjs-backend-cpu';
 
 import Webcam from "react-webcam";
 import {renderPredictions, setDetectionRegion} from "@/features/aiod/utils/canvas-utils";
+import { DetectionToolbox, DetectionSettings } from "./DetectionToolbox";
+import { DetectionWidget } from "./DetectionWidget";
 
 const ObjectDetection = () => {
 
@@ -17,6 +19,14 @@ const ObjectDetection = () => {
     const canvasRef = useRef();
     const [isLoaded, setIsLoaded] = useState(false);
     const [dimensions, setDimensions] = useState({ width: 1920, height: 1080 });
+    const [detectionHistory, setDetectionHistory] = useState([]);
+    const [currentStatus, setCurrentStatus] = useState("No detection");
+    const [detectedObjects, setDetectedObjects] = useState(0);
+    const [settings, setSettings] = useState<DetectionSettings>({
+        threshold: 0.9,
+        historySize: 20,
+        inferenceFrequency: 300,
+    });
 
     async function detect(net: ObjectDetection) {
         if (
@@ -43,43 +53,38 @@ const ObjectDetection = () => {
             );
 
             const context = canvasRef.current.getContext("2d");
-            renderPredictions(detectedObjects, context);
+            const result = renderPredictions(detectedObjects, context, settings);
+            
+            if (result) {
+                const { newHistory, newStatus } = result;
+                setDetectionHistory(newHistory);
+                setCurrentStatus(newStatus);
+            }
+            
+            setDetectedObjects(detectedObjects.length);
         }
     }
 
     const runCoco = async () => {
-        // Error: No backend found in registry.
         await tf.setBackend('webgl');
         await tf.ready();
         const net = await cocoSsdLoad();
         console.log("Coco model loaded.");
         setIsLoaded(true);
 
-        const detectInterval =  setInterval(() => {
+        const detectInterval = setInterval(() => {
             detect(net);
-        }, 300); // every 50ms
-    }
+        }, settings.inferenceFrequency);
 
-    const showVideo = () => {
-        console.log("showing video");
-        if (webcamRef.current !== null && webcamRef.current?.video && webcamRef.current.video?.readyState === 4) {
-            const video = webcamRef.current.video;
-            const width = video.videoWidth;
-            const height = video.videoHeight;
-
-            webcamRef.current.video.width = width;
-            webcamRef.current.video.heigth = height;
-        } else {
-            console.log("no webcamRef.current");
-        }
+        return () => clearInterval(detectInterval);
     }
 
     useEffect(() => {
         const setupCamera = async () => {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
-                    width: { ideal: 3840 },  // 4K width
-                    height: { ideal: 2160 }, // 4K height
+                    width: { ideal: 3840 },
+                    height: { ideal: 2160 },
                 },
             });
             if (webcamRef.current) {
@@ -94,12 +99,16 @@ const ObjectDetection = () => {
         };
 
         setupCamera();
-        runCoco();
+        const cleanupCoco = runCoco();
 
         return () => {
-            // Cleanup code
+            cleanupCoco.then(cleanup => cleanup && cleanup());
         };
-    }, []);
+    }, [settings.inferenceFrequency]);
+
+    const handleSettingsChange = (newSettings: DetectionSettings) => {
+        setSettings(newSettings);
+    };
 
     if (!isLoaded) {
         return (
@@ -131,6 +140,14 @@ const ObjectDetection = () => {
                     className={cn("absolute rounded-md ")}
                     width={dimensions.width}
                     height={dimensions.height}
+                />
+            </div>
+            <div className="mt-4 flex space-x-4">
+                <DetectionToolbox onSettingsChange={handleSettingsChange} />
+                <DetectionWidget
+                    detectionHistory={detectionHistory}
+                    currentStatus={currentStatus}
+                    detectedObjects={detectedObjects}
                 />
             </div>
         </div>

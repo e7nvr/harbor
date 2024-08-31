@@ -30,7 +30,11 @@ const ALERT_THRESHOLD = 0.9; // Porcentaje de detecciones fuera/parciales para a
 
 let detectionHistory: DetectionHistory[] = [];
 
-export const renderPredictions = (predictions: DetectedObject[], ctx: any) => {
+export const renderPredictions = (
+    predictions: DetectedObject[], 
+    ctx: CanvasRenderingContext2D, 
+    settings: DetectionSettings
+): { newHistory: DetectionHistory[], newStatus: string } => {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     // Set detection region if not set
@@ -42,6 +46,8 @@ export const renderPredictions = (predictions: DetectedObject[], ctx: any) => {
     ctx.strokeStyle = "#00FF00";
     ctx.lineWidth = 2;
     ctx.strokeRect(detectionRegion.x, detectionRegion.y, detectionRegion.width, detectionRegion.height);
+
+    let currentStatus = "No detection";
 
     predictions.forEach((prediction) => {
         if (prediction.class !== "person") return; // Ignorar objetos que no sean personas
@@ -90,6 +96,11 @@ export const renderPredictions = (predictions: DetectedObject[], ctx: any) => {
             playAlarm(); // Alerta cuando la persona no está completamente dentro
         }
     });
+
+    return { 
+        newHistory: detectionHistory,  // Return the entire detectionHistory array
+        newStatus: currentStatus 
+    };
 }
 
 function getPersonPosition(x: number, y: number, width: number, height: number): "inside" | "partially" | "outside" {
