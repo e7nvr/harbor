@@ -17,16 +17,20 @@ import "@tensorflow/tfjs-backend-cpu";
 import "@tensorflow/tfjs-backend-webgl";
 import {DetectedObject, ObjectDetection} from "@tensorflow-models/coco-ssd";
 import {toast} from "sonner";
+import {webcam} from "@tensorflow/tfjs-data";
+import {beep} from "@/lib/beep";
 
 
+type Pros = {}
+let stopTimeout: any = null;
 
 const KouScreen = () => {
 
     const [model, setModel] = useState<ObjectDetection>();
     const [loading, setLoading] = useState(false);
 
-    const canvasRef = useRef();
-    const webcamRef = useRef();
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const webcamRef = useRef<Webcam>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
     const [autoRecordedEnabled, setAutoRecordedEnabled] = useState(false);
@@ -47,6 +51,10 @@ const KouScreen = () => {
         setAutoRecordedEnabled(!autoRecordedEnabled);
     }
 
+    /*****************************************************************
+     *  Handler Functions
+     *****************************************************************/
+
 
     const userPromptScreenshot = () => {
         // take a picture
@@ -59,25 +67,57 @@ const KouScreen = () => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href= url;
-            // download the image with timestamp
-            a.download = `screenshot-${Date.now()}.png`;
+            a.download = `alarm-${Date.now()}.png`;
+            a.click();
         }
     }
 
     const userPromptVideo = () => {
-        // start recording
+
         if (!webcamRef.current) {
             toast('Camera not found. Please refresh');
-        } else {
-            if (mediaRecorderRef.current) {
-                mediaRecorderRef.current.start();
-                setIsRecording(true);
-            } else {
-                toast('MediaRecorder not found. Please refresh');
-            }
         }
+
+        // start recording
+        if (mediaRecorderRef.current?.state == 'recording') {
+            // check if recording is already in progress
+            // then stop recording
+            // and save the video and download it
+
+            mediaRecorderRef.current.requestData();
+            clearTimeout(stopTimeout);
+            mediaRecorderRef.current.stop();
+            toast('Recording saved successfully');
+        }
+
+        // if not recording
+        // then start recording
+        // const stream = webcamRef.current.video.srcObject as MediaStream;
+        // const mediaRecorder = new MediaRecorder(stream);
+        // mediaRecorderRef.current = mediaRecorder;
+        startRecording(true);
+        toast('Recording started');
     }
 
+
+    function startRecording(doBeep: boolean) {
+
+        if (webcamRef.current && mediaRecorderRef.current?.state !== 'recording') {
+            // const stream = webcamRef.current.video.srcObject as MediaStream;
+            // const mediaRecorder = new MediaRecorder(stream);
+            // mediaRecorderRef.current = mediaRecorder;
+            mediaRecorderRef.current?.start();
+            doBeep && beep(volume);
+
+            stopTimeout = setTimeout(() => {
+                if (mediaRecorderRef.current?.state == 'recording') {
+                    mediaRecorderRef.current.requestData();
+                    mediaRecorderRef.current.stop();
+                    toast('Recording saved successfully');
+                }
+            }, 30000);
+        }
+    }
 
 
     return (
@@ -92,9 +132,9 @@ const KouScreen = () => {
                             className={cn("", "h-full w-full object-contain p-2" )}>
                         </Webcam>
                         <video
-                            autoPlay=""
-                            muted=""
-                            playsInline=""
+                            autoPlay={true}
+                            muted={true}
+                            playsInline={true}
                             className={cn("hidden bg-gray-500 ",
                                 "h-full w-full ", "",
                                 "object-contain p-2",
@@ -103,7 +143,7 @@ const KouScreen = () => {
 
                         <canvas
                             ref={canvasRef}
-                            className={cn("bg-black/70",
+                            className={cn("bg-black/0",
                                 "absolute ",
                                 "top-0 left-0 h-full w-full ",
                                 "object-contain",
@@ -115,7 +155,8 @@ const KouScreen = () => {
                 </div>
 
 
-            {/* right division - container for detection toolbox and action chat section */}
+            {/* right division */}
+            {/* container for detection toolbox and action chat section */}
                 <div className={cn("flex flex-row flex-1")} >
 
                     {/* detection toolbox */}

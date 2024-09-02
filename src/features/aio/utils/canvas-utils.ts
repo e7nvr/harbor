@@ -1,5 +1,6 @@
 import {throttle} from 'lodash';
 import { DetectedObject } from '@tensorflow-models/coco-ssd';
+import {DetectionSettings} from "@/features/aio/components/DetectionToolbox";
 
 // Define la región de detección
 let detectionRegion = {
@@ -19,7 +20,7 @@ export const setDetectionRegion = (canvasWidth: number, canvasHeight: number) =>
 };
 
 // Definir una interfaz para el historial de detecciones
-interface DetectionHistory {
+export interface DetectionHistory {
     position: "inside" | "partially" | "outside";
     timestamp: number;
 }
@@ -42,10 +43,17 @@ export const renderPredictions = (
         setDetectionRegion(ctx.canvas.width, ctx.canvas.height);
     }
 
+    ctx.globalAlpha = 0.05;
     // Draw detection region
     ctx.strokeStyle = "#00FF00";
     ctx.lineWidth = 2;
     ctx.strokeRect(detectionRegion.x, detectionRegion.y, detectionRegion.width, detectionRegion.height);
+    // fill the region with a transparent color
+    ctx.fillStyle = "#00FF00";
+    ctx.globalAlpha = 0.05;
+    ctx.fillRect(detectionRegion.x, detectionRegion.y, detectionRegion.width, detectionRegion.height);
+
+    ctx.globalAlpha = 0.65;
 
     let currentStatus = "No detection";
 

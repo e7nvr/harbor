@@ -3,23 +3,23 @@
 import {cn} from "@/lib/utils";
 import {useEffect, useRef, useState} from "react";
 
-import {load as cocoSsdLoad} from "@tensorflow-models/coco-ssd";
+import {DetectedObject, load as cocoSsdLoad, ObjectDetection} from "@tensorflow-models/coco-ssd";
 import * as tf from "@tensorflow/tfjs";
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 
 import Webcam from "react-webcam";
-import {renderPredictions, setDetectionRegion} from "@/features/aio/utils/canvas-utils";
+import {DetectionHistory, renderPredictions, setDetectionRegion} from "@/features/aio/utils/canvas-utils";
 import { DetectionToolbox, DetectionSettings } from "./DetectionToolbox";
 import { DetectionWidget } from "./DetectionWidget";
 
-const ObjectDetection = () => {
+const ObjectDetectionScreen = () => {
 
-    const webcamRef = useRef();
-    const canvasRef = useRef();
+    const webcamRef = useRef<Webcam>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const [dimensions, setDimensions] = useState({ width: 1920, height: 1080 });
-    const [detectionHistory, setDetectionHistory] = useState([]);
+    const [detectionHistory, setDetectionHistory] = useState<DetectionHistory[]>([]);
     const [currentStatus, setCurrentStatus] = useState("No detection");
     const [detectedObjects, setDetectedObjects] = useState(0);
     const [settings, setSettings] = useState<DetectionSettings>({
@@ -52,7 +52,8 @@ const ObjectDetection = () => {
                 0.5
             );
 
-            const context = canvasRef.current.getContext("2d");
+            const context: CanvasRenderingContext2D | null = canvasRef.current.getContext("2d");
+            if (!context) return;
             const result = renderPredictions(detectedObjects, context, settings);
             
             if (result) {
@@ -88,11 +89,11 @@ const ObjectDetection = () => {
                 },
             });
             if (webcamRef.current) {
-                webcamRef.current.video.srcObject = stream;
-                webcamRef.current.video.onloadedmetadata = () => {
+                webcamRef.current.video!.srcObject = stream;
+                webcamRef.current.video!.onloadedmetadata = () => {
                     setDimensions({
-                        width: webcamRef.current.video.videoWidth,
-                        height: webcamRef.current.video.videoHeight
+                        width: webcamRef.current!.video!.videoWidth,
+                        height: webcamRef.current!.video!.videoHeight
                     });
                 };
             }
@@ -112,8 +113,8 @@ const ObjectDetection = () => {
 
     if (!isLoaded) {
         return (
-            <div className={cn("mt-8 w-full h-full bg-yellow-200")}>
-                <div className={" bg-yellow-200 relative w-full h-full flex justify-center items-center gradient p-1.5 rounded-md"}>
+            <div className={cn("mt-0 w-full h-full bg-white/50")}>
+                <div className={" bg-white/50 relative w-full h-full flex justify-center items-center gradient p-1.5 rounded-md"}>
                     <div className={"flex items-center justify-items-center "}>
                         <h4 className={"gradient"}> Loading...</h4>
                     </div>
@@ -123,7 +124,7 @@ const ObjectDetection = () => {
     };
 
     return (
-        <div className={cn("mt-8")}>
+        <div className={cn("mt-0 relative")}>
             <div className={"relative w-full flex justify-center items-center gradient p-1.5 rounded-md"}>
                 {/* webcam */}
                 <Webcam
@@ -142,7 +143,7 @@ const ObjectDetection = () => {
                     height={dimensions.height}
                 />
             </div>
-            <div className="mt-4 flex space-x-4">
+            <div className="absolute mt-[-5rem] py-2 px-4 w-full bg-accent/10 flex space-x-4">
                 <DetectionToolbox onSettingsChange={handleSettingsChange} />
                 <DetectionWidget
                     detectionHistory={detectionHistory}
@@ -154,4 +155,4 @@ const ObjectDetection = () => {
     );
 }
 
-export default ObjectDetection;
+export default ObjectDetectionScreen;
