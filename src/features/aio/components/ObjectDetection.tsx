@@ -9,7 +9,7 @@ import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 
 import Webcam from "react-webcam";
-import {renderPredictions, setDetectionRegion} from "@/features/aiod/utils/canvas-utils";
+import {renderPredictions, setDetectionRegion} from "@/features/aio/utils/canvas-utils";
 import { DetectionToolbox, DetectionSettings } from "./DetectionToolbox";
 import { DetectionWidget } from "./DetectionWidget";
 
