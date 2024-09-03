@@ -16,10 +16,8 @@ import "@tensorflow/tfjs-backend-cpu";
 import "@tensorflow/tfjs-backend-webgl";
 import {DetectedObject, ObjectDetection} from "@tensorflow-models/coco-ssd";
 import {toast} from "sonner";
-import {webcam} from "@tensorflow/tfjs-data";
 import {beep} from "@/lib/beep";
 import {drawOnCanvas} from "@/lib/draw-utils";
-import {convertToMp4AndDownload} from "@/lib/video-convert";
 
 
 type Pros = {}
@@ -161,7 +159,13 @@ const KouScreen = () => {
 
 
     const toggleAutoRecord = () => {
-        setAutoRecordedEnabled(!autoRecordedEnabled);
+        if(!autoRecordedEnabled) {
+            toast('Auto rec enabled');
+            setAutoRecordedEnabled(true);
+        } else {
+            setAutoRecordedEnabled(false);
+            toast('Auto rec disabled');
+        }
     }
 
     /*****************************************************************
@@ -220,23 +224,16 @@ const KouScreen = () => {
             return;
         }
 
-        // If recording is in progress, stop it and save the video
+        // If rec is in progress, stop it and save the video
         if (mediaRecorderRef.current?.state === 'recording') {
             mediaRecorderRef.current.requestData();
             clearTimeout(stopTimeout);
             mediaRecorderRef.current.stop();
-
-            // Convert to MP4 and download
-            mediaRecorderRef.current.onstop = () => {
-                // @ts-ignore
-                const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                convertToMp4AndDownload(blob);
-            };
-
             toast('Recording saved successfully');
+
         } else {
-            // Start recording
-            startRecording(true);
+            // Start rec
+            startRecording();
             toast('Recording started');
         }
     }
@@ -245,35 +242,20 @@ const KouScreen = () => {
     let recordedChunks = [];
 
 
-    const startRecording = (stream: any) => {
-        let doBeep = true;
-        recordedChunks = [];
+    const startRecording = (doBeep: boolean = false) => {
 
         if (webcamRef.current && mediaRecorderRef.current?.state !== 'recording') {
-            const mediaRecorder = new MediaRecorder(stream);
-            mediaRecorderRef.current = mediaRecorder;
-
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    recordedChunks.push(event.data);
-                }
-            };
-            mediaRecorder.start();
-
-            // const stream = webcamRef.current.video.srcObject as MediaStream;
-            // const mediaRecorder = new MediaRecorder(stream);
-            // mediaRecorderRef.current = mediaRecorder;
-
-            // mediaRecorderRef.current?.start();
-            doBeep && beep(volume);
-
+            mediaRecorderRef.current?.start();
+            if (doBeep) {
+                // @ts-ignore
+                beep(volume);
+            }
             stopTimeout = setTimeout(() => {
-                if (mediaRecorderRef.current?.state == 'recording') {
+                if(mediaRecorderRef.current?.state === 'recording') {
                     mediaRecorderRef.current.requestData();
-                    mediaRecorderRef.current.stop();
-                    toast('Recording saved successfully');
+                    mediaRecorderRef.current?.stop();
                 }
-            }, 30000);
+            }, 5000);
         }
     }
 

@@ -13,7 +13,7 @@ export const convertToMp4AndDownload = async (blob: any) => {
         document.body.appendChild(a);
         a.classList.add("hidden");
         a.href = url;
-        a.download = 'recording.mp4';
+        a.download = 'rec.mp4';
         a.click();
         URL.revokeObjectURL(url);
     } catch (error) {
@@ -25,7 +25,7 @@ export const convertToMp4AndDownload = async (blob: any) => {
         document.body.appendChild(a);
         a.classList.add("hidden");
         a.href = url;
-        a.download = 'recording.webm';
+        a.download = 'rec.webm';
         a.click();
         URL.revokeObjectURL(url);
     }
