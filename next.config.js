@@ -1,4 +1,9 @@
+const nextConfig = {
+  output: 'export',
+}
+
 module.exports = {
+  ...nextConfig,
   async headers() {
     return [
       {

@@ -1,7 +1,5 @@
 "use client";
 
-import {Toaster} from "@/components/ui/sonner";
-import {KouScreen} from "@/features/kou/components/screen";
 import {cn} from "@/lib/utils";
 import React from "react";
 
