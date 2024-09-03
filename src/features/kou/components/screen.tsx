@@ -550,7 +550,7 @@ const KouScreen = () => {
                                 <CameraIcon/>
                             </Button>
                             {/* Video Icon Button */}
-                            <Button variant="outline"
+                            <Button variant={isRecording ? 'destructive' : 'outline'}
                                     size={"icon"}
                                     onClick={userPromptVideo}>
                                 <VideoIcon/>
