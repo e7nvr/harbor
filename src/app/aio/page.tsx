@@ -21,7 +21,7 @@ export default function AIODHome()  {
                 </a>
                 <h2 className={"relative top-[-2.2rem] bg-gray-50/40 p-0 m-0 text-center w-full text-2xl line-clamp-2 font-black text-gray-900/70 justify-center content-center rounded-full"}>
                     Panda Peach <br/>
-                    <span className={"bg-red-500/20 px-2 rounded-full"}>Capricornio</span>
+                    <span className={"bg-blue-500/20 px-2 rounded-full"}>Capricornio</span>
                 </h2>
             </div>
         </main>
