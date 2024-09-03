@@ -11,8 +11,7 @@ import {
     PersonStanding,
     SunIcon,
     VideoIcon,
-    Volume2,
-    X
+    Volume2, XIcon
 } from "lucide-react";
 import {Separator} from "@/components/ui/separator";
 import {Button} from "@/components/ui/button";
@@ -46,7 +45,6 @@ const KouScreen = () => {
     const webcamRef = useRef<Webcam>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
-    const [detecting, setDetecting] = useState(false);
     const [volume, setVolume] = useState(0.5);
     const [autoRecordedEnabled, setAutoRecordedEnabled] = useState(false);
     const [mirrored, setMirrored] = useState(true);
@@ -66,10 +64,6 @@ const KouScreen = () => {
     const [loading, setLoading] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
-    const [pandaImage, setPandaImage] = useState("");
-    const [seePeople, setSeePeople] = useState(false);
-    const [isAlertDetected, setIsAlertDetected] = useState(false);
-    const [isFlipping, setIsFlipping] = useState(false);
 
 
     /*****************************************************************
@@ -136,52 +130,11 @@ const KouScreen = () => {
 
     useEffect(() => {
         interval = setInterval(async () => {
-            setDetecting(!detecting);
             runPrediction();
         }, 100);
 
         return () => clearInterval(interval);
     }, [webcamRef.current, model, mirrored, autoRecordedEnabled, runPrediction])
-
-
-    useEffect(() => {
-        if (loading) {
-            setPandaImage("/panda/status/panda-loading.png");
-        } else if (isAlertDetected) {
-            setPandaImage("/panda/status/panda-alert.png");
-        } else if (isRecording) {
-            setPandaImage("/panda/status/panda-recording.png");
-        } else if (seePeople) {
-            setPandaImage('/panda/status/panda-see.png');
-        } else if (autoRecordedEnabled) {
-            setPandaImage("/panda/status/panda-watch.png");
-        } else {
-            setPandaImage("/panda/status/panda.png");
-        }
-    }, [loading, isAlertDetected, isRecording, seePeople, autoRecordedEnabled]);
-
-
-    useEffect(() => {
-        setIsFlipping(true);
-        const timer = setTimeout(() => {
-            if (loading) {
-                setPandaImage("/panda/status/panda-loading.png");
-            } else if (isAlertDetected) {
-                setPandaImage("/panda/status/panda-alert.png");
-            } else if (isRecording) {
-                setPandaImage("/panda/status/panda-recording.png");
-            } else if (seePeople) {
-                setPandaImage('/panda/status/panda-see.png');
-            } else if (autoRecordedEnabled) {
-                setPandaImage("/panda/status/panda-watch.png");
-            } else {
-                setPandaImage("/panda/status/panda.png");
-            }
-            setIsFlipping(false);
-        }, 300); // Half of the transition duration
-
-        return () => clearTimeout(timer);
-    }, [loading, isAlertDetected, isRecording, seePeople, autoRecordedEnabled]);
 
 
     /**
@@ -220,20 +173,12 @@ const KouScreen = () => {
         if (predictions.length > 0) {
             predictions.forEach((prediction) => {
                 if (prediction.class === 'person') {
-                    setSeePeople(true);
                     isPerson = true;
                 }
             });
             if (isPerson && autoRecordedEnabled) {
-                setIsAlertDetected(true);
                 startRecording(true);
-            } else {
-                setSeePeople(true);
-                setIsAlertDetected(false);
             }
-        } else {
-            setSeePeople(false);
-            setIsAlertDetected(false);
         }
     }
 
@@ -341,7 +286,6 @@ const KouScreen = () => {
                     mediaRecorderRef.current.requestData();
                     mediaRecorderRef.current?.stop();
                 }
-                setIsAlertDetected(false);
             }, 5000);
         }
     }
@@ -511,43 +455,13 @@ const KouScreen = () => {
 
         return (
 
-            <div className={cn("relative flex h-screen")}>
-                {(detecting) && (
-                <p className="absolute bottom-4 left-4 text-2xl font-bold z-50">🐼</p>
-                )}
 
-                <div className={cn(
-                    "absolute bottom-8 right-8 mb-24  mr-8 z-40 w-48",
-                    "perspective-1000"  // Add perspective for 3D effect
-                )}>
-                    <div className={cn(
-                        "relative w-full h-full",
-                        "transition-transform duration-600 transform-style-preserve-3d",
-                        isFlipping ? "rotate-y-180" : ""
-                    )}>
-                        <div className={cn(
-                            "absolute w-full h-full backface-hidden",
-                            "flex flex-col items-center justify-center",
-                            "bg-amber-50/20 rounded-2xl",
-                        )}>
-                            <a href={"/rec"}>
-                                <img src={pandaImage} alt={"panda"} className="w-full h-auto object-contain"/>
-                            </a>
-                        </div>
-                        <div className={cn(
-                            "absolute w-full h-full backface-hidden rotate-y-180",
-                            "flex items-center justify-center",
-                            "bg-amber-50/20 rounded-2xl"
-                        )}>
-                        </div>
-                    </div>
-                </div>
+            <div className={cn("relative flex h-screen")}>
 
                 {lastAlert && (
                     <div className={cn(
-                        "absolute top-4 left-4 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg",
-                        "overflow-hidden transition-all duration-300 ease-in-out",
-                        "z-[999]"
+                        "absolute top-4 left-4 w-64 z-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg",
+                        "overflow-hidden transition-all duration-300 ease-in-out"
                     )}>
                         <div className="relative">
                             <video
@@ -561,7 +475,7 @@ const KouScreen = () => {
                                 onClick={() => setLastAlert(null)}
                                 className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/75 transition-colors"
                             >
-                                <X size={16}/>
+                                <XIcon size={16} />
                             </button>
                         </div>
                         <div className="p-3">
@@ -685,7 +599,6 @@ const KouScreen = () => {
                     </div>
 
                 </div>
-
 
             </div>
         );
