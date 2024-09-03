@@ -1,7 +1,7 @@
 "use client";
 
 import {cn} from "@/lib/utils";
-import {useEffect, useRef, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import Webcam from "react-webcam";
 import {
     CameraIcon,
@@ -11,7 +11,8 @@ import {
     PersonStanding,
     SunIcon,
     VideoIcon,
-    Volume2
+    Volume2,
+    X
 } from "lucide-react";
 import {Separator} from "@/components/ui/separator";
 import {Button} from "@/components/ui/button";
@@ -19,6 +20,8 @@ import {ModeToggle} from "@/features/kou/components/ui/mode-toogle";
 import { Rings } from 'react-loader-spinner';
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Slider} from "@/components/ui/slider";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { format } from 'date-fns';
 
 import * as cocossd from "@tensorflow-models/coco-ssd";
 import "@tensorflow/tfjs-backend-cpu";
@@ -43,14 +46,30 @@ const KouScreen = () => {
     const webcamRef = useRef<Webcam>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
+    const [detecting, setDetecting] = useState(false);
     const [volume, setVolume] = useState(0.5);
     const [autoRecordedEnabled, setAutoRecordedEnabled] = useState(false);
     const [mirrored, setMirrored] = useState(true);
+    const [chatMessages, setChatMessages] = useState<Array<{
+        type: 'alert' | 'info',
+        content: string,
+        videoUrl?: string,
+        timestamp: Date
+    }>>([]);
+    const [lastAlert, setLastAlert] = useState<{
+        content: string;
+        videoUrl: string;
+        timestamp: Date;
+    } | null>(null);
 
     // state for the model
     const [loading, setLoading] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
+    const [pandaImage, setPandaImage] = useState("");
+    const [seePeople, setSeePeople] = useState(false);
+    const [isAlertDetected, setIsAlertDetected] = useState(false);
+    const [isFlipping, setIsFlipping] = useState(false);
 
 
     /*****************************************************************
@@ -69,7 +88,7 @@ const KouScreen = () => {
             if (event.data.size == 0) return;
 
             const webmBlob = new Blob([event.data], {type: 'video/webm'});
-            
+
             if (ffmpegLoaded) {
                 try {
                     const mp4Blob = await convertToMp4(webmBlob);
@@ -115,14 +134,54 @@ const KouScreen = () => {
     }, [model])
 
 
-
     useEffect(() => {
         interval = setInterval(async () => {
+            setDetecting(!detecting);
             runPrediction();
         }, 100);
 
-    return () => clearInterval(interval);
+        return () => clearInterval(interval);
     }, [webcamRef.current, model, mirrored, autoRecordedEnabled, runPrediction])
+
+
+    useEffect(() => {
+        if (loading) {
+            setPandaImage("/panda/status/panda-loading.png");
+        } else if (isAlertDetected) {
+            setPandaImage("/panda/status/panda-alert.png");
+        } else if (isRecording) {
+            setPandaImage("/panda/status/panda-recording.png");
+        } else if (seePeople) {
+            setPandaImage('/panda/status/panda-see.png');
+        } else if (autoRecordedEnabled) {
+            setPandaImage("/panda/status/panda-watch.png");
+        } else {
+            setPandaImage("/panda/status/panda.png");
+        }
+    }, [loading, isAlertDetected, isRecording, seePeople, autoRecordedEnabled]);
+
+
+    useEffect(() => {
+        setIsFlipping(true);
+        const timer = setTimeout(() => {
+            if (loading) {
+                setPandaImage("/panda/status/panda-loading.png");
+            } else if (isAlertDetected) {
+                setPandaImage("/panda/status/panda-alert.png");
+            } else if (isRecording) {
+                setPandaImage("/panda/status/panda-recording.png");
+            } else if (seePeople) {
+                setPandaImage('/panda/status/panda-see.png');
+            } else if (autoRecordedEnabled) {
+                setPandaImage("/panda/status/panda-watch.png");
+            } else {
+                setPandaImage("/panda/status/panda.png");
+            }
+            setIsFlipping(false);
+        }, 300); // Half of the transition duration
+
+        return () => clearTimeout(timer);
+    }, [loading, isAlertDetected, isRecording, seePeople, autoRecordedEnabled]);
 
 
     /**
@@ -161,12 +220,20 @@ const KouScreen = () => {
         if (predictions.length > 0) {
             predictions.forEach((prediction) => {
                 if (prediction.class === 'person') {
+                    setSeePeople(true);
                     isPerson = true;
                 }
             });
             if (isPerson && autoRecordedEnabled) {
+                setIsAlertDetected(true);
                 startRecording(true);
+            } else {
+                setSeePeople(true);
+                setIsAlertDetected(false);
             }
+        } else {
+            setSeePeople(false);
+            setIsAlertDetected(false);
         }
     }
 
@@ -178,7 +245,7 @@ const KouScreen = () => {
 
 
     const toggleAutoRecord = () => {
-        if(!autoRecordedEnabled) {
+        if (!autoRecordedEnabled) {
             toast('Auto rec enabled');
             setAutoRecordedEnabled(true);
         } else {
@@ -270,10 +337,11 @@ const KouScreen = () => {
                 beep(volume);
             }
             stopTimeout = setTimeout(() => {
-                if(mediaRecorderRef.current?.state === 'recording') {
+                if (mediaRecorderRef.current?.state === 'recording') {
                     mediaRecorderRef.current.requestData();
                     mediaRecorderRef.current?.stop();
                 }
+                setIsAlertDetected(false);
             }, 5000);
         }
     }
@@ -284,7 +352,16 @@ const KouScreen = () => {
         a.href = url;
         a.download = `alarm-${Date.now()}.${extension}`;
         a.click();
-        URL.revokeObjectURL(url);
+
+        const now = new Date();
+        const newAlert = {
+            content: `🚨 ¡Alerta! Se ha detectado una persona a las ${format(now, 'HH:mm:ss')}. Video grabado automáticamente.`,
+            videoUrl: url,
+            timestamp: now
+        };
+        setLastAlert(newAlert);
+        // @ts-ignore
+        setChatMessages(prev => [newAlert, ...prev]);
     };
 
     useEffect(() => {
@@ -296,6 +373,7 @@ const KouScreen = () => {
                 console.error('Failed to load FFmpeg:', error);
             }
         }
+
         initFFmpeg();
     }, []);
 
@@ -316,96 +394,184 @@ const KouScreen = () => {
     };
 
     // inner components
-    const RenderFeatureHighlightsSection = () => {
+    function RenderFeatureHighlightsSection() {
         return <div className="text-xs text-muted-foreground">
             <ul className="space-y-4">
                 <li>
-                    <strong>Dark Mode/Sys Theme 🌗</strong>
-                    <p>Toggle between dark mode and system theme.</p>
+                    <strong>Modo nocturno/claro Theme 🌗</strong>
+                    <p>Alterna entre el modo oscuro o el claro.</p>
                     <Button className="my-2 h-6 w-6" variant={"outline"} size={"icon"}>
-                        <SunIcon size={14} />
+                        <SunIcon size={14}/>
                     </Button>{" "}
                     /{" "}
                     <Button className="my-2 h-6 w-6" variant={"outline"} size={"icon"}>
-                        <MoonIcon size={14} />
+                        <MoonIcon size={14}/>
                     </Button>
                 </li>
                 <li>
-                    <strong>Horizontal Flip ↔️</strong>
-                    <p>Adjust horizontal orientation.</p>
+                    <strong>Voltear la camara ↔️</strong>
+                    <p>Ajustar la orientacion de la camara.</p>
                     <Button className='h-6 w-6 my-2'
                             variant={'outline'} size={'icon'}
                             onClick={() => {
                                 setMirrored((prev) => !prev)
                             }}
-                    ><FlipHorizontal size={14} /></Button>
+                    ><FlipHorizontal size={14}/></Button>
                 </li>
-                <Separator />
+                <Separator/>
                 <li>
-                    <strong>Take Pictures 📸</strong>
-                    <p>Capture snapshots at any moment from the video feed.</p>
+                    <strong>Tomar Foto 📸</strong>
+                    <p>Capture instantaneas en cualquier momento desde la camara.</p>
                     <Button
                         className='h-6 w-6 my-2'
                         variant={'outline'} size={'icon'}
                         onClick={userPromptScreenshot}
                     >
-                        <CameraIcon size={14} />
+                        <CameraIcon size={14}/>
                     </Button>
                 </li>
                 <li>
-                    <strong>Manual Video Recording 📽️</strong>
-                    <p>Manually record video clips as needed.</p>
+                    <strong>Grabacion de clip 📽️</strong>
+                    <p>Grabacion un clip de la camara.</p>
                     <Button className='h-6 w-6 my-2'
                             variant={isRecording ? 'destructive' : 'outline'} size={'icon'}
                             onClick={userPromptVideo}
                     >
-                        <VideoIcon size={14} />
+                        <VideoIcon size={14}/>
                     </Button>
                 </li>
-                <Separator />
+                <Separator/>
                 <li>
-                    <strong>Enable/Disable Auto Record 🚫</strong>
+                    <strong>Prender/Apagar la Alarma 🚫</strong>
                     <p>
-                        Option to enable/disable automatic video recording whenever
-                        required.
+                        Presione para prender/apagar la alarma automatica con grabacion automatica.
                     </p>
                     <Button className='h-6 w-6 my-2'
                             variant={autoRecordedEnabled ? 'destructive' : 'outline'}
                             size={'icon'}
                             onClick={toggleAutoRecord}
                     >
-                        {autoRecordedEnabled ? <Rings color='white' height={30} /> : <PersonStanding size={14} />}
+                        {autoRecordedEnabled ? <Rings color='white' height={30}/> : <PersonStanding size={14}/>}
 
                     </Button>
                 </li>
 
                 <li>
-                    <strong>Volume Slider 🔊</strong>
-                    <p>Adjust the volume level of the notifications.</p>
+                    <strong>Control del Volumen 🔊</strong>
+                    <p>Ajusta el volumen de las notificaciones.</p>
                 </li>
-                <li>
-                    <strong>Camera Feed Highlighting 🎨</strong>
-                    <p>
-                        Highlights persons in{" "}
-                        <span style={{ color: "#FF0F0F" }}>red</span> and other objects in{" "}
-                        <span style={{ color: "#00B612" }}>green</span>.
-                    </p>
-                </li>
-                <Separator />
-                <li className="space-y-4 hide">
-                    <strong>Share your thoughts 💬 </strong>
+                <Separator/>
+                <li className="space-y-4">
+                    <strong>Comparte tus comentarios 💬 </strong>
                     <SocialMediaLinks/>
-                    <br />
-                    <br />
-                    <br />
+                    <br/>
                 </li>
             </ul>
         </div>
     }
 
+    const RenderChatSection = () => {
 
-    return (
-        <div className={cn("flex h-screen")}>
+        return (
+            <ScrollArea className="h-full pr-4">
+            <ul className="space-y-4">
+                <Separator/>
+                {chatMessages.length > 0 && (
+                    <li>
+                        <strong>Feed de Alertas 🎨</strong>
+                        <p>
+                            Highlights in {" "}
+                            <span style={{color: "#FF0F0F"}}>red</span> and other objects in{" "}
+                            <span style={{color: "#00B612"}}>green</span>.
+                        </p>
+                    </li>
+                )}
+                <Separator/>
+                    <div className="flex flex-col gap-4">
+                        {chatMessages.map((message, index) => (
+                            <div key={index}
+                                 className={`p-4 rounded-lg ${message.type === 'alert' ? 'bg-red-100 dark:bg-red-900' : 'bg-blue-100 dark:bg-blue-900'}`}>
+                                <p className="mb-2 font-medium">{message.content}</p>
+                                {message.videoUrl && (
+                                    <video src={message.videoUrl} autoPlay loop muted
+                                           className="w-full rounded-md"/>
+                                )}
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                    {format(message.timestamp, 'dd/MM/yyyy HH:mm:ss')}
+                                </p>
+                            </div>
+                        ))}
+                        <Separator/>
+                        <RenderFeatureHighlightsSection/>
+                    </div>
+                <Separator/>
+            </ul>
+            </ScrollArea>
+        )};
+
+        return (
+
+            <div className={cn("relative flex h-screen")}>
+                {(detecting) && (
+                <p className="absolute bottom-4 left-4 text-2xl font-bold z-50">🐼</p>
+                )}
+
+                <div className={cn(
+                    "absolute bottom-8 right-8 mb-24  mr-8 z-40 w-48",
+                    "perspective-1000"  // Add perspective for 3D effect
+                )}>
+                    <div className={cn(
+                        "relative w-full h-full",
+                        "transition-transform duration-600 transform-style-preserve-3d",
+                        isFlipping ? "rotate-y-180" : ""
+                    )}>
+                        <div className={cn(
+                            "absolute w-full h-full backface-hidden",
+                            "flex flex-col items-center justify-center",
+                            "bg-amber-50/20 rounded-2xl",
+                        )}>
+                            <a href={"/rec"}>
+                                <img src={pandaImage} alt={"panda"} className="w-full h-auto object-contain"/>
+                            </a>
+                        </div>
+                        <div className={cn(
+                            "absolute w-full h-full backface-hidden rotate-y-180",
+                            "flex items-center justify-center",
+                            "bg-amber-50/20 rounded-2xl"
+                        )}>
+                        </div>
+                    </div>
+                </div>
+
+                {lastAlert && (
+                    <div className={cn(
+                        "absolute top-4 left-4 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg",
+                        "overflow-hidden transition-all duration-300 ease-in-out",
+                        "z-[999]"
+                    )}>
+                        <div className="relative">
+                            <video
+                                src={lastAlert.videoUrl}
+                                autoPlay
+                                loop
+                                muted
+                                className="w-full h-36 object-cover"
+                            />
+                            <button
+                                onClick={() => setLastAlert(null)}
+                                className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/75 transition-colors"
+                            >
+                                <X size={16}/>
+                            </button>
+                        </div>
+                        <div className="p-3">
+                            <p className="text-sm font-medium">{lastAlert.content}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                                {format(lastAlert.timestamp, 'dd/MM/yyyy HH:mm:ss')}
+                            </p>
+                        </div>
+                    </div>
+                )}
 
                 {/* left division - container for webcam and canvas */}
                 <div className={cn("relative")}>
@@ -414,7 +580,7 @@ const KouScreen = () => {
                         <Webcam
                             ref={webcamRef}
                             mirrored={mirrored}
-                            className={cn("", "h-full w-full object-contain p-2" )}>
+                            className={cn("", "h-full w-full object-contain p-2")}>
                         </Webcam>
                         <video
                             autoPlay={true}
@@ -440,9 +606,9 @@ const KouScreen = () => {
                 </div>
 
 
-            {/* right division */}
-            {/* container for detection toolbox and action chat section */}
-                <div className={cn("flex flex-row flex-1")} >
+                {/* right division */}
+                {/* container for detection toolbox and action chat section */}
+                <div className={cn("flex flex-row flex-1")}>
 
                     {/* detection toolbox */}
                     <div className={cn("border-primary/5 border-2 shadow-md rounded-md",
@@ -514,15 +680,15 @@ const KouScreen = () => {
 
 
                     {/* action chat section */}
-                    <div className={cn("h-full flex-1 py-4 px-2 overflow-y-scroll")}>
-                        <RenderFeatureHighlightsSection/>
+                    <div className={cn("h-full flex-1 py-4 px-2")}>
+                        <RenderChatSection/>
                     </div>
-
 
                 </div>
 
-        </div>
-    );
+
+            </div>
+        );
 }
 
-export { KouScreen };
+export {KouScreen};

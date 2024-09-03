@@ -1,5 +1,7 @@
 import type { Config } from "tailwindcss";
 
+// @ts-ignore
+// @ts-ignore
 const config: Config = {
     darkMode: ["class"],
     content: [
@@ -60,9 +62,30 @@ const config: Config = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			}
+  		},
+  		transitionDuration: {
+  			'600': '600ms',
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function ({ }) {
+      const newUtilities = {
+        '.backface-hidden': {
+          'backface-visibility': 'hidden',
+        },
+        '.perspective-1000': {
+          'perspective': '1000px',
+        },
+        '.transform-style-preserve-3d': {
+          'transform-style': 'preserve-3d',
+        },
+        '.rotate-y-180': {
+          'transform': 'rotateY(180deg)',
+        },
+      }
+    }
+  ],
 };
 export default config;

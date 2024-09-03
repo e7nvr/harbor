@@ -7,7 +7,12 @@ export function drawOnCanvas(
   ctx: CanvasRenderingContext2D | null | undefined
 ) {
   predictions.forEach((detectedObject: DetectedObject) => {
+
+
     const { class: name, bbox, score } = detectedObject;
+    // only draw if there are predictions are person class
+    if (name !== "person") return;
+
     const [x, y, width, height] = bbox;
 
     if (ctx) {
@@ -15,7 +20,7 @@ export function drawOnCanvas(
 
       // styling
       ctx.fillStyle = name === "person" ? "#FF0F0F" : "#00B612";
-      ctx.globalAlpha = 0.4;
+      ctx.globalAlpha = 0.2;
 
       mirrored
         ? ctx.roundRect(ctx.canvas.width - x, y, -width, height, 8)
@@ -25,12 +30,12 @@ export function drawOnCanvas(
       ctx.fill();
 
       // text styling
-      ctx.font = "12px Courier New";
-      ctx.fillStyle = 'black'
-      ctx.globalAlpha = 1;
-      mirrored
-        ? ctx.fillText(name, ctx.canvas.width - x -width + 10, y + 20)
-        : ctx.fillText(name, x + 10 , y + 20);
+      // ctx.font = "12px Courier New";
+      // ctx.fillStyle = 'black'
+      // ctx.globalAlpha = 1;
+      // mirrored
+      //   ? ctx.fillText(name, ctx.canvas.width - x -width + 10, y + 20)
+      //   : ctx.fillText(name, x + 10 , y + 20);
     }
   });
 }
