@@ -3,7 +3,7 @@
  * @param base64
  * @returns Blob
  */
-const base64toBlob = (base64: any) => {
+export const base64toBlob = (base64: any) => {
     const byteCharacters = atob(base64.split(",")[1]);
     const arrayBuffer = new ArrayBuffer(byteCharacters.length);
     const byteArray = new Uint8Array(arrayBuffer);

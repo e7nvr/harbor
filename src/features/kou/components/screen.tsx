@@ -1,8 +1,7 @@
 "use client";
 
-
 import {cn} from "@/lib/utils";
-import {useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import Webcam from "react-webcam";
 import {CameraIcon, FlipHorizontalIcon, PersonStanding, VideoIcon, Volume2} from "lucide-react";
 import {Separator} from "@/components/ui/separator";
@@ -19,33 +18,147 @@ import {DetectedObject, ObjectDetection} from "@tensorflow-models/coco-ssd";
 import {toast} from "sonner";
 import {webcam} from "@tensorflow/tfjs-data";
 import {beep} from "@/lib/beep";
+import {drawOnCanvas} from "@/lib/draw-utils";
+import {convertToMp4AndDownload} from "@/lib/video-convert";
 
 
 type Pros = {}
+let interval: any = null;
 let stopTimeout: any = null;
+
 
 const KouScreen = () => {
 
     const [model, setModel] = useState<ObjectDetection>();
-    const [loading, setLoading] = useState(false);
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const webcamRef = useRef<Webcam>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
+    const [volume, setVolume] = useState(0.5);
     const [autoRecordedEnabled, setAutoRecordedEnabled] = useState(false);
+    const [mirrored, setMirrored] = useState(true);
+
+    // state for the model
+    const [loading, setLoading] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
 
-    const [mirrored, setMirrored] = useState(true);
-    const [volume, setVolume] = useState(0.5);
 
-    async function loadModel() {
-        // 'lite_mobilenet_v2' | 'mobilenet_v2'
+    /*****************************************************************
+     *  User Effects and Handlers
+     *****************************************************************/
+
+    useEffect(() => {
+        // check if webcam is available
+        if (!webcamRef.current) return
+
+        const stream = (webcamRef.current.video as any).captureStream();
+        if (!stream) return;
+
+        mediaRecorderRef.current = new MediaRecorder(stream);
+        mediaRecorderRef.current.ondataavailable = (event) => {
+            if (event.data.size == 0) return;
+
+            const blob = new Blob([event.data], {type: 'video'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `alarm-${Date.now()}.webm`;
+            a.click();
+        };
+
+        // @ts-ignore
+        mediaRecorderRef.current.onstart = (event) => {
+            setIsRecording(true);
+        }
+
+        // @ts-ignore
+        mediaRecorderRef.current.onstop = (event) => {
+            setIsRecording(false);
+        }
+
+        return () => {
+            console.log('disposing media recorder');
+            mediaRecorderRef.current?.stop();
+            mediaRecorderRef.current = null;
+        }
+    }, [webcamRef]);
+
+
+    useEffect(() => {
+        setLoading(true);
+        initModel();
+    }, []);
+
+
+    useEffect(() => {
+        if (model) {
+            setLoading(false);
+        }
+    }, [model])
+
+
+
+    useEffect(() => {
+        interval = setInterval(async () => {
+            runPrediction();
+        }, 100);
+
+    return () => clearInterval(interval);
+    }, [webcamRef.current, model, mirrored, autoRecordedEnabled, runPrediction])
+
+
+    /**
+     * Prediction and Model Functions
+     */
+
+
+    // load the model
+    async function initModel() {
         const loadModel: ObjectDetection = await cocossd.load({
             base: 'mobilenet_v2'
         });
         setModel(loadModel);
     }
+
+
+    async function runPrediction() {
+        if (
+            !model
+            || !webcamRef.current
+            || !webcamRef.current.video
+            || !(webcamRef.current.video.readyState === 4)
+            || !canvasRef.current
+        ) return;
+
+        const predictions: DetectedObject[] = await model.detect(webcamRef.current.video);
+        const canvasContext: CanvasRenderingContext2D | null = canvasRef.current.getContext('2d');
+        if (!canvasContext) return;
+
+        let video: HTMLVideoElement = webcamRef.current.video;
+
+        resizeCanvas(video, canvasContext);
+        drawOnCanvas(mirrored, predictions, canvasContext);
+
+        let isPerson: boolean = false;
+        if (predictions.length > 0) {
+            predictions.forEach((prediction) => {
+                if (prediction.class === 'person') {
+                    isPerson = true;
+                }
+            });
+            if (isPerson && autoRecordedEnabled) {
+                startRecording(true);
+            }
+        }
+    }
+
+    function resizeCanvas(video: HTMLVideoElement, canvas: CanvasRenderingContext2D) {
+        const {videoWidth, videoHeight} = video;
+        canvas.canvas.width = videoWidth;
+        canvas.canvas.height = videoHeight;
+    }
+
 
     const toggleAutoRecord = () => {
         setAutoRecordedEnabled(!autoRecordedEnabled);
@@ -57,56 +170,101 @@ const KouScreen = () => {
 
 
     const userPromptScreenshot = () => {
-        // take a picture
         if (!webcamRef.current) {
             toast('Camera not found. Please refresh');
-        } else {
-            const imageSrc = webcamRef.current.getScreenshot();
-            const blob =  base64toBlob(imageSrc);
-
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href= url;
-            a.download = `alarm-${Date.now()}.png`;
-            a.click();
+            return;
         }
+
+        const imageSrc = webcamRef.current.getScreenshot();
+        if (!imageSrc) {
+            toast('Failed to capture image. Please try again.');
+            return;
+        }
+
+        // Create a canvas to convert the image to JPEG
+        const canvas = document.createElement('canvas');
+        const img = new Image();
+        img.onload = () => {
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            // @ts-ignore
+            ctx.drawImage(img, 0, 0);
+
+            // Convert to JPEG
+            canvas.toBlob((blob) => {
+                if (!blob) {
+                    toast('Failed to convert image. Please try again.');
+                    return;
+                }
+
+                // Create and click download link
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `alarm-${Date.now()}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                // Clean up
+                URL.revokeObjectURL(url);
+            }, 'image/jpeg', 0.9); // 0.9 is the JPEG quality (0-1)
+        };
+        img.src = imageSrc;
     }
 
     const userPromptVideo = () => {
-
         if (!webcamRef.current) {
             toast('Camera not found. Please refresh');
+            return;
         }
 
-        // start recording
-        if (mediaRecorderRef.current?.state == 'recording') {
-            // check if recording is already in progress
-            // then stop recording
-            // and save the video and download it
-
+        // If recording is in progress, stop it and save the video
+        if (mediaRecorderRef.current?.state === 'recording') {
             mediaRecorderRef.current.requestData();
             clearTimeout(stopTimeout);
             mediaRecorderRef.current.stop();
-            toast('Recording saved successfully');
-        }
 
-        // if not recording
-        // then start recording
-        // const stream = webcamRef.current.video.srcObject as MediaStream;
-        // const mediaRecorder = new MediaRecorder(stream);
-        // mediaRecorderRef.current = mediaRecorder;
-        startRecording(true);
-        toast('Recording started');
+            // Convert to MP4 and download
+            mediaRecorderRef.current.onstop = () => {
+                // @ts-ignore
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                convertToMp4AndDownload(blob);
+            };
+
+            toast('Recording saved successfully');
+        } else {
+            // Start recording
+            startRecording(true);
+            toast('Recording started');
+        }
     }
 
+    // @ts-ignore
+    let recordedChunks = [];
 
-    function startRecording(doBeep: boolean) {
+
+    const startRecording = (stream: any) => {
+        let doBeep = true;
+        recordedChunks = [];
 
         if (webcamRef.current && mediaRecorderRef.current?.state !== 'recording') {
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = mediaRecorder;
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            mediaRecorder.start();
+
             // const stream = webcamRef.current.video.srcObject as MediaStream;
             // const mediaRecorder = new MediaRecorder(stream);
             // mediaRecorderRef.current = mediaRecorder;
-            mediaRecorderRef.current?.start();
+
+            // mediaRecorderRef.current?.start();
             doBeep && beep(volume);
 
             stopTimeout = setTimeout(() => {
@@ -129,6 +287,7 @@ const KouScreen = () => {
 
                         <Webcam
                             ref={webcamRef}
+                            mirrored={mirrored}
                             className={cn("", "h-full w-full object-contain p-2" )}>
                         </Webcam>
                         <video

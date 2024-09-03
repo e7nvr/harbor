@@ -100,11 +100,11 @@ const Page = () => {
                     </div>
                     <div className="flex flex-1 justify-end gap-8">
                         <div className="flex items-center gap-9">
-                            <a className="text-[#0e141b] text-sm font-medium leading-normal" href="#">Inicio</a>
+                            <a className="text-[#0e141b] text-sm font-medium leading-normal" href="/">Inicio</a>
                             <a className="text-[#0e141b] bg-orange-200/50 p-2 rounded-full  text-sm font-semibold leading-normal"
                                href="/about">Sobre Nosotros</a>
                             <a className="text-[#0e141b] mutted text-sm font-medium leading-normal"
-                               href="#">Características</a>
+                               href="/features">Características</a>
                             <a className="text-[#0e141b] mutted text-sm font-medium leading-normal" href="#">Precios</a>
                             <a className="text-[#0e141b] mutted text-sm font-medium leading-normal"
                                href="#">Contacto</a>
@@ -134,7 +134,7 @@ const Page = () => {
                                         <h1
                                             className="text-[#0e141b] text-4xl font-black leading-tight tracking-[-0.033em] @[480px]:text-5xl @[480px]:font-black @[480px]:leading-tight @[480px]:tracking-[-0.033em]"
                                         >
-                                            AI-based elderly monitoring
+                                            Monitoreo de personas mayores basado en IA
                                         </h1>
                                         <h2 className="text-[#0e141b] text-sm font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal">
                                             Peach Panda es una solución basada en inteligencia artificial que te ayuda a cuidar de tus seres queridos en edad avanzada.

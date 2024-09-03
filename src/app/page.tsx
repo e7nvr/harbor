@@ -19,7 +19,7 @@ export default function Home() {
                         <div className="flex items-center gap-9">
                             <a className="text-[#0e141b] text-sm font-medium leading-normal" href="#">Inicio</a>
                             <a className="text-[#0e141b] bg-orange-200/50 p-2 rounded-full  text-sm font-semibold leading-normal" href="/about">Sobre Nosotros</a>
-                            <a className="text-[#0e141b] mutted text-sm font-medium leading-normal" href="#">Características</a>
+                            <a className="text-[#0e141b] mutted text-sm font-medium leading-normal" href="/features">Características</a>
                             <a className="text-[#0e141b] mutted text-sm font-medium leading-normal" href="#">Precios</a>
                             <a className="text-[#0e141b] mutted text-sm font-medium leading-normal" href="#">Contacto</a>
                         </div>
