@@ -1,4 +1,5 @@
 import Image from "next/image";
+import React from "react";
 
 export default function Home() {
     return (
@@ -17,16 +18,17 @@ export default function Home() {
                     <div className="flex flex-1 justify-end gap-8">
                         <div className="flex items-center gap-9">
                             <a className="text-[#0e141b] text-sm font-medium leading-normal" href="#">Inicio</a>
-                            <a className="text-[#0e141b] text-sm font-medium leading-normal" href="/about">Sobre Nosotros</a>
-                            <a className="text-[#0e141b] text-sm font-medium leading-normal" href="#">Características</a>
-                            <a className="text-[#0e141b] text-sm font-medium leading-normal" href="#">Precios</a>
-                            <a className="text-[#0e141b] text-sm font-medium leading-normal" href="#">Contacto</a>
+                            <a className="text-[#0e141b] bg-orange-200/50 p-2 rounded-full  text-sm font-semibold leading-normal" href="/about">Sobre Nosotros</a>
+                            <a className="text-[#0e141b] mutted text-sm font-medium leading-normal" href="#">Características</a>
+                            <a className="text-[#0e141b] mutted text-sm font-medium leading-normal" href="#">Precios</a>
+                            <a className="text-[#0e141b] mutted text-sm font-medium leading-normal" href="#">Contacto</a>
                         </div>
+                        <a href={"/aio"}>
                         <button
                             className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 bg-[#1980e6] text-slate-50 text-sm font-bold leading-normal tracking-[0.015em]"
                         >
-                            <span className="truncate">Registrarse</span>
-                        </button>
+                            <span className="truncate">Probar ahora</span>
+                        </button> </a>
                     </div>
                 </header>
                 <div className="px-40 flex flex-1 justify-center py-5">
