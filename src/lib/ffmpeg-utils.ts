@@ -35,5 +35,6 @@ export async function convertToMp4(webmBlob: Blob): Promise<Blob> {
     ]);
 
     const data = await ffmpeg.readFile(outputFileName);
+    // @ts-ignore
     return new Blob([data.buffer], { type: 'video/mp4' });
 }

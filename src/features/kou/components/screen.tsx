@@ -3,7 +3,16 @@
 import {cn} from "@/lib/utils";
 import {useEffect, useRef, useState} from "react";
 import Webcam from "react-webcam";
-import {CameraIcon, FlipHorizontalIcon, PersonStanding, VideoIcon, Volume2} from "lucide-react";
+import {
+    CameraIcon,
+    FlipHorizontal,
+    FlipHorizontalIcon,
+    MoonIcon,
+    PersonStanding,
+    SunIcon,
+    VideoIcon,
+    Volume2
+} from "lucide-react";
 import {Separator} from "@/components/ui/separator";
 import {Button} from "@/components/ui/button";
 import {ModeToggle} from "@/features/kou/components/ui/mode-toogle";
@@ -290,6 +299,110 @@ const KouScreen = () => {
         initFFmpeg();
     }, []);
 
+    const SocialMediaLinks = () => {
+        return (
+            <div className='flex flex-row gap-4'>
+                <a href="/" target="_blank" rel="noopener noreferrer">
+                    🏠 Volver a la home
+                </a>
+                <a href="/about" target="_blank" rel="noopener noreferrer">
+                    ℹ️ Acerca de
+                </a>
+                <a href="/features" target="_blank" rel="noopener noreferrer">
+                    🌟 Características
+                </a>
+            </div>
+        );
+    };
+
+    // inner components
+    const RenderFeatureHighlightsSection = () => {
+        return <div className="text-xs text-muted-foreground">
+            <ul className="space-y-4">
+                <li>
+                    <strong>Dark Mode/Sys Theme 🌗</strong>
+                    <p>Toggle between dark mode and system theme.</p>
+                    <Button className="my-2 h-6 w-6" variant={"outline"} size={"icon"}>
+                        <SunIcon size={14} />
+                    </Button>{" "}
+                    /{" "}
+                    <Button className="my-2 h-6 w-6" variant={"outline"} size={"icon"}>
+                        <MoonIcon size={14} />
+                    </Button>
+                </li>
+                <li>
+                    <strong>Horizontal Flip ↔️</strong>
+                    <p>Adjust horizontal orientation.</p>
+                    <Button className='h-6 w-6 my-2'
+                            variant={'outline'} size={'icon'}
+                            onClick={() => {
+                                setMirrored((prev) => !prev)
+                            }}
+                    ><FlipHorizontal size={14} /></Button>
+                </li>
+                <Separator />
+                <li>
+                    <strong>Take Pictures 📸</strong>
+                    <p>Capture snapshots at any moment from the video feed.</p>
+                    <Button
+                        className='h-6 w-6 my-2'
+                        variant={'outline'} size={'icon'}
+                        onClick={userPromptScreenshot}
+                    >
+                        <CameraIcon size={14} />
+                    </Button>
+                </li>
+                <li>
+                    <strong>Manual Video Recording 📽️</strong>
+                    <p>Manually record video clips as needed.</p>
+                    <Button className='h-6 w-6 my-2'
+                            variant={isRecording ? 'destructive' : 'outline'} size={'icon'}
+                            onClick={userPromptVideo}
+                    >
+                        <VideoIcon size={14} />
+                    </Button>
+                </li>
+                <Separator />
+                <li>
+                    <strong>Enable/Disable Auto Record 🚫</strong>
+                    <p>
+                        Option to enable/disable automatic video recording whenever
+                        required.
+                    </p>
+                    <Button className='h-6 w-6 my-2'
+                            variant={autoRecordedEnabled ? 'destructive' : 'outline'}
+                            size={'icon'}
+                            onClick={toggleAutoRecord}
+                    >
+                        {autoRecordedEnabled ? <Rings color='white' height={30} /> : <PersonStanding size={14} />}
+
+                    </Button>
+                </li>
+
+                <li>
+                    <strong>Volume Slider 🔊</strong>
+                    <p>Adjust the volume level of the notifications.</p>
+                </li>
+                <li>
+                    <strong>Camera Feed Highlighting 🎨</strong>
+                    <p>
+                        Highlights persons in{" "}
+                        <span style={{ color: "#FF0F0F" }}>red</span> and other objects in{" "}
+                        <span style={{ color: "#00B612" }}>green</span>.
+                    </p>
+                </li>
+                <Separator />
+                <li className="space-y-4 hide">
+                    <strong>Share your thoughts 💬 </strong>
+                    <SocialMediaLinks/>
+                    <br />
+                    <br />
+                    <br />
+                </li>
+            </ul>
+        </div>
+    }
+
 
     return (
         <div className={cn("flex h-screen")}>
@@ -338,11 +451,11 @@ const KouScreen = () => {
 
                         {/* top section */}
                         <div className={cn("flex flex-col gap-2")}>
-                            <ModeToggle />
+                            <ModeToggle/>
                             <Button variant="outline"
                                     size={"icon"} onClick={() => {
-                                        setMirrored((prev) => !prev);
-                                    }}>
+                                setMirrored((prev) => !prev);
+                            }}>
                                 <FlipHorizontalIcon/>
                             </Button>
                             <Separator className={"my-2"}/>
@@ -366,7 +479,8 @@ const KouScreen = () => {
                             <Button variant={autoRecordedEnabled ? 'destructive' : 'outline'}
                                     size={'icon'}
                                     onClick={toggleAutoRecord}>
-                                {autoRecordedEnabled ? <Rings color={"white"} height={24} width={45}/> : <PersonStanding />}
+                                {autoRecordedEnabled ? <Rings color={"white"} height={24} width={45}/> :
+                                    <PersonStanding/>}
                             </Button>
                         </div>
 
@@ -377,7 +491,8 @@ const KouScreen = () => {
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <Button variant={"outline"} size={"icon"}
-                                            onClick={() => {}}>
+                                            onClick={() => {
+                                            }}>
                                         <Volume2/>
                                     </Button>
                                 </PopoverTrigger>
@@ -400,14 +515,14 @@ const KouScreen = () => {
 
                     {/* action chat section */}
                     <div className={cn("h-full flex-1 py-4 px-2 overflow-y-scroll")}>
-                        [ action chat ]
+                        <RenderFeatureHighlightsSection/>
                     </div>
 
 
                 </div>
 
         </div>
-    )
+    );
 }
 
 export { KouScreen };
