@@ -342,17 +342,6 @@ const KouScreen = () => {
         return <div className="text-xs text-muted-foreground">
             <ul className="space-y-4">
                 <li>
-                    <strong>Modo nocturno/claro Theme 🌗</strong>
-                    <p>Alterna entre el modo oscuro o el claro.</p>
-                    <Button className="my-2 h-6 w-6" variant={"outline"} size={"icon"}>
-                        <SunIcon size={14}/>
-                    </Button>{" "}
-                    /{" "}
-                    <Button className="my-2 h-6 w-6" variant={"outline"} size={"icon"}>
-                        <MoonIcon size={14}/>
-                    </Button>
-                </li>
-                <li>
                     <strong>Voltear la camara ↔️</strong>
                     <p>Ajustar la orientacion de la camara.</p>
                     <Button className='h-6 w-6 my-2'
@@ -531,7 +520,6 @@ const KouScreen = () => {
 
                         {/* top section */}
                         <div className={cn("flex flex-col gap-2")}>
-                            <ModeToggle/>
                             <Button variant="outline"
                                     size={"icon"} onClick={() => {
                                 setMirrored((prev) => !prev);
