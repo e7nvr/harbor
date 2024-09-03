@@ -18,6 +18,7 @@ import {DetectedObject, ObjectDetection} from "@tensorflow-models/coco-ssd";
 import {toast} from "sonner";
 import {beep} from "@/lib/beep";
 import {drawOnCanvas} from "@/lib/draw-utils";
+import { loadFFmpeg, convertToMp4 } from '@/lib/ffmpeg-utils';
 
 
 type Pros = {}
@@ -40,6 +41,7 @@ const KouScreen = () => {
     // state for the model
     const [loading, setLoading] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
+    const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
 
 
     /*****************************************************************
@@ -54,15 +56,23 @@ const KouScreen = () => {
         if (!stream) return;
 
         mediaRecorderRef.current = new MediaRecorder(stream);
-        mediaRecorderRef.current.ondataavailable = (event) => {
+        mediaRecorderRef.current.ondataavailable = async (event) => {
             if (event.data.size == 0) return;
 
-            const blob = new Blob([event.data], {type: 'video'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `alarm-${Date.now()}.webm`;
-            a.click();
+            const webmBlob = new Blob([event.data], {type: 'video/webm'});
+            
+            if (ffmpegLoaded) {
+                try {
+                    const mp4Blob = await convertToMp4(webmBlob);
+                    saveBlob(mp4Blob, 'mp4');
+                } catch (error) {
+                    console.error('Error converting to MP4:', error);
+                    toast('Failed to convert video. Saving as WebM.');
+                    saveBlob(webmBlob, 'webm');
+                }
+            } else {
+                saveBlob(webmBlob, 'webm');
+            }
         };
 
         // @ts-ignore
@@ -80,7 +90,7 @@ const KouScreen = () => {
             mediaRecorderRef.current?.stop();
             mediaRecorderRef.current = null;
         }
-    }, [webcamRef]);
+    }, [webcamRef, ffmpegLoaded]);
 
 
     useEffect(() => {
@@ -258,6 +268,27 @@ const KouScreen = () => {
             }, 5000);
         }
     }
+
+    const saveBlob = (blob: Blob, extension: string) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `alarm-${Date.now()}.${extension}`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    useEffect(() => {
+        async function initFFmpeg() {
+            try {
+                await loadFFmpeg();
+                setFfmpegLoaded(true);
+            } catch (error) {
+                console.error('Failed to load FFmpeg:', error);
+            }
+        }
+        initFFmpeg();
+    }, []);
 
 
     return (
