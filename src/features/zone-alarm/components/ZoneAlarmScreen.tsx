@@ -1,13 +1,20 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Pencil, Edit2, Hand, Check } from "lucide-react";
-import { EditorState } from '../domain/types';
+import { EditorState, ScreenState } from '../domain/types';
 import { usePolygonEditor } from '../hooks/usePolygonEditor';
+import FloatingToolbar from './editor/FloatingToolbar';
+import { savePolygon as savePolygonService } from '../services/polygonService';
+import { toast } from "@/components/ui/use-toast";
 
 const ZoneAlarmScreen: React.FC = () => {
+    const [screenState, setScreenState] = useState<ScreenState>(ScreenState.Idle);
+    const [isSaving, setIsSaving] = useState(false);
+    const [showToolbar, setShowToolbar] = useState(false); // New state
+
     const {
         polygon,
         editorState,
@@ -17,12 +24,41 @@ const ZoneAlarmScreen: React.FC = () => {
         handleMouseMove,
         handleMouseUp,
         resetPolygon,
-        isPolygonComplete
+        isPolygonComplete,
+        setIsPolygonComplete // Add this if not already present in usePolygonEditor
     } = usePolygonEditor();
 
     const getMousePosition = (e: React.MouseEvent<SVGSVGElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();
         return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    };
+
+    const savePolygon = async () => {
+        if (!isPolygonComplete) {
+            toast({
+                title: "Error",
+                description: "El polígono no está completo",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await savePolygonService(polygon);
+            toast({
+                title: "Éxito",
+                description: "Polígono guardado correctamente",
+            });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "No se pudo guardar el polígono",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const getPolygonStyle = () => {
@@ -36,7 +72,35 @@ const ZoneAlarmScreen: React.FC = () => {
         }
     };
 
-    // @ts-ignore
+    const handleStateChange = (newState: ScreenState) => {
+        setScreenState(newState);
+        setShowToolbar(true); // Always show toolbar when changing state
+        switch (newState) {
+            case ScreenState.Drawing:
+                setEditorState(EditorState.Drawing);
+                break;
+            case ScreenState.Editing:
+                setEditorState(EditorState.Editing);
+                break;
+            case ScreenState.Moving:
+                setEditorState(EditorState.Moving);
+                break;
+            case ScreenState.Detecting:
+                // Logic for object detection
+                break;
+            case ScreenState.Idle:
+                setEditorState(EditorState.Idle);
+                setShowToolbar(false); // Hide toolbar in Idle state
+                break;
+        }
+    };
+
+    const handleCloseToolbar = () => {
+        handleStateChange(ScreenState.Idle);
+        // Don't reset polygon completion state when closing the toolbar
+        // setIsPolygonComplete(false); // Remove this line
+    };
+
     return (
         <div className={cn("relative flex h-screen")}>
             <div className={cn("relative flex-1")}>
@@ -47,7 +111,7 @@ const ZoneAlarmScreen: React.FC = () => {
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
                 >
-                    {isPolygonComplete && (
+                    {polygon.length > 2 && (
                         <polygon
                             points={polygon.map(v => `${v.x},${v.y}`).join(' ')}
                             {...getPolygonStyle()}
@@ -69,19 +133,27 @@ const ZoneAlarmScreen: React.FC = () => {
                         />
                     ))}
                 </svg>
+                {showToolbar && (
+                    <FloatingToolbar 
+                        onClose={handleCloseToolbar}
+                        setEditorState={setEditorState}
+                        resetPolygon={resetPolygon}
+                        savePolygon={savePolygon}
+                        editorState={editorState}
+                        isPolygonComplete={isPolygonComplete || polygon.length > 2}
+                        isSaving={isSaving}
+                    />
+                )}
             </div>
             <div className={cn("flex flex-col gap-2 p-4 border-l border-gray-200 dark:border-gray-700")}>
-                <Button onClick={() => setEditorState(EditorState.Drawing)} disabled={isPolygonComplete || editorState === EditorState.Drawing}>
+                <Button 
+                    onClick={() => {
+                        setEditorState(EditorState.Drawing);
+                        handleStateChange(ScreenState.Drawing);
+                    }} 
+                    disabled={screenState !== ScreenState.Idle}
+                >
                     <Pencil className="mr-2 h-4 w-4" /> Dibujar
-                </Button>
-                <Button onClick={() => setEditorState(EditorState.Editing)} disabled={!isPolygonComplete || editorState === EditorState.Editing}>
-                    <Edit2 className="mr-2 h-4 w-4" /> Editar Vértices
-                </Button>
-                <Button onClick={() => setEditorState(EditorState.Moving)} disabled={!isPolygonComplete || editorState === EditorState.Moving}>
-                    <Hand className="mr-2 h-4 w-4" /> Mover Polígono
-                </Button>
-                <Button onClick={resetPolygon}>
-                    <Check className="mr-2 h-4 w-4" /> Reiniciar
                 </Button>
             </div>
         </div>

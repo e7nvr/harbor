@@ -7,3 +7,13 @@ export enum EditorState {
   Editing = "editing",
   Moving = "moving"
 }
+
+export enum ScreenState {
+  Idle = "idle",
+  Drawing = "drawing",
+  Editing = "editing",
+  Moving = "moving",
+  Detecting = "detecting"
+}
+
+

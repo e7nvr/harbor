@@ -8,6 +8,11 @@ export const usePolygonEditor = () => {
   const [draggedVertex, setDraggedVertex] = useState<number | null>(null);
   const [lastMousePosition, setLastMousePosition] = useState<Point | null>(null);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
+  const [isPolygonCompleteState, setIsPolygonCompleteState] = useState(false);
+
+  useEffect(() => {
+    setIsPolygonCompleteState(isPolygonComplete(polygon));
+  }, [polygon]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -42,6 +47,7 @@ export const usePolygonEditor = () => {
       const newPolygon = addVertex(prev, point);
       if (isPolygonComplete(newPolygon)) {
         setEditorState(EditorState.Idle);
+        setIsPolygonCompleteState(true);
       }
       return newPolygon;
     });
@@ -74,6 +80,11 @@ export const usePolygonEditor = () => {
   const resetPolygon = useCallback(() => {
     setPolygon([]);
     setEditorState(EditorState.Idle);
+    setIsPolygonCompleteState(false);
+  }, []);
+
+  const setIsPolygonComplete = useCallback((value: boolean) => {
+    setIsPolygonCompleteState(value);
   }, []);
 
   return {
@@ -85,6 +96,7 @@ export const usePolygonEditor = () => {
     handleMouseMove,
     handleMouseUp,
     resetPolygon,
-    isPolygonComplete: isPolygonComplete(polygon)
+    isPolygonComplete: isPolygonCompleteState,
+    setIsPolygonComplete
   };
 };
