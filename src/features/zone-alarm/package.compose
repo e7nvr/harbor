@@ -1,0 +1,8 @@
+🚨 Zona de Alarma: ¡No te salgas del cuadro o sufrirás las consecuencias sonoras:
+
+1. Demosle a la camara un ancho de 1920px y un alto de 1080px 
+3. Permitamos al usuario dibujar un poligono de 4 lados 
+4. Dibujemos el poligono en el canvas 
+5. Detectemos los objetos que esten dentro del poligono 
+6. Si detectamos un objeto, mostramos una alerta
+7. Si dejamos de detectar un objeto, mostramos una alerta
