@@ -110,13 +110,13 @@ const Page = () => {
                                href="#">Contacto</a>
                         </div>
                         <div className="flex gap-2">
-                            <a href={"/aio"}>
-                                <button
-                                    className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 bg-[#1980e6] text-slate-50 text-sm font-bold leading-normal tracking-[0.015em]"
-                                >
-                                    <span className="truncate">Probar ahora</span>
-                                </button>
-                            </a>
+                            <a href={"/kou"}>
+                                    <button
+                                        className="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 bg-[#1980e6] text-slate-50 text-sm font-bold leading-normal tracking-[0.015em]"
+                                    >
+                                        <span className="truncate">Probar ahora</span>
+                                    </button>
+                                </a>
                         </div>
                     </div>
                 </header>
