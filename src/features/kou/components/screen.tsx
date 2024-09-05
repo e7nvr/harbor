@@ -323,16 +323,28 @@ const KouScreen = () => {
 
     const SocialMediaLinks = () => {
         return (
-            <div className='flex flex-row gap-4'>
-                <a href="/" target="_blank" rel="noopener noreferrer">
-                    🏠 Volver a la home
+            <div className='flex flex-col gap-4'>
+                <a href="/labs/detection-playground" target="_blank" rel="noopener noreferrer">
+                    🕵️ Playground de Detección: Juega a ser detective con personas, manos, caras y poses.
                 </a>
-                <a href="/about" target="_blank" rel="noopener noreferrer">
-                    ℹ️ Acerca de
+                <a href="/labs/alarm-zone" target="_blank" rel="noopener noreferrer">
+                    🚨 Zona de Alarma: ¡No te salgas del cuadro o sufrirás las consecuencias sonoras!
                 </a>
-                <a href="/features" target="_blank" rel="noopener noreferrer">
-                    🌟 Características
+
+                {/* 
+                <a href="/labs/dance-challenge" target="_blank" rel="noopener noreferrer">
+                    💃 Reto de Baile: ¿Puedes engañar al detector de movimiento con tus pasos prohibidos?
                 </a>
+                <a href="/labs/emoji-mirror" target="_blank" rel="noopener noreferrer">
+                    🤪 Espejo Emoji: Convierte tu cara en el emoji que representa tu estado de ánimo actual.
+                </a>
+                <a href="/labs/invisibility-cloak" target="_blank" rel="noopener noreferrer">
+                    🧙‍♂️ Capa de Invisibilidad: Desaparece mágicamente de la cámara (o al menos inténtalo).
+                </a>
+                <a href="/labs/ai-director" target="_blank" rel="noopener noreferrer">
+                    🎬 Director IA: Deja que la inteligencia artificial dirija tu próxima obra maestra cinematográfica.
+                </a>
+                */}
             </div>
         );
     };
@@ -395,9 +407,9 @@ const KouScreen = () => {
                 </li>
                 <Separator/>
                 <li className="space-y-4">
-                    <strong>Comparte tus comentarios 💬 </strong>
-                    <SocialMediaLinks/>
-                    <br/>
+                    <strong>¡Gabriel explora más diversión! 🎉</strong>
+                    <SocialMediaLinks />
+                    <br />
                 </li>
             </ul>
         </div>

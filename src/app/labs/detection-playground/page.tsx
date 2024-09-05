@@ -471,7 +471,7 @@ const Home = (props: Props) => {
                             cameraStatus={cameraDeviceProvider?.status.status}
                             mode={currentMode}
                         />
-                        {/* <InformationDialog />  */}
+                       {/*  <InformationDialog /> */}
                         <Separator orientation="vertical" className="mx-2" />
                         <Volume
                             cameraStatus={cameraDeviceProvider?.status.status}
