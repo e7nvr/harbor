@@ -3,30 +3,26 @@
 import {cn} from "@/lib/utils";
 import {useEffect, useRef, useState} from "react";
 
-import {DetectedObject, load as cocoSsdLoad, ObjectDetection} from "@tensorflow-models/coco-ssd";
+import {load as cocoSsdLoad, ObjectDetection} from "@tensorflow-models/coco-ssd";
 import * as tf from "@tensorflow/tfjs";
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 
 import Webcam from "react-webcam";
-import {DetectionHistory, renderPredictions, setDetectionRegion} from "@/features/aio/utils/canvas-utils";
-import { DetectionToolbox, DetectionSettings } from "./DetectionToolbox";
-import { DetectionWidget } from "./DetectionWidget";
+import {renderPredictions, setDetectionRegion} from "@/features/aio/utils/canvas-utils";
+import { DetectionSettings } from "./DetectionToolbox";
 
 const ObjectDetectionScreen = () => {
 
     const webcamRef = useRef<Webcam>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isLoaded, setIsLoaded] = useState(false);
-    const [dimensions, setDimensions] = useState({ width: 1920, height: 1080 });
-    const [detectionHistory, setDetectionHistory] = useState<DetectionHistory[]>([]);
-    const [currentStatus, setCurrentStatus] = useState("No detection");
-    const [detectedObjects, setDetectedObjects] = useState(0);
-    const [settings, setSettings] = useState<DetectionSettings>({
+    const settings : DetectionSettings = {
         threshold: 0.9,
         historySize: 20,
         inferenceFrequency: 300,
-    });
+    };
+    const [mirrored, setMirrored] = useState(true);
 
     async function detect(net: ObjectDetection) {
         if (
@@ -54,15 +50,7 @@ const ObjectDetectionScreen = () => {
 
             const context: CanvasRenderingContext2D | null = canvasRef.current.getContext("2d");
             if (!context) return;
-            const result = renderPredictions(detectedObjects, context, settings);
-            
-            if (result) {
-                const { newHistory, newStatus } = result;
-                setDetectionHistory(newHistory);
-                setCurrentStatus(newStatus);
-            }
-            
-            setDetectedObjects(detectedObjects.length);
+            renderPredictions(detectedObjects, context, settings);
         }
     }
 
@@ -80,25 +68,20 @@ const ObjectDetectionScreen = () => {
         return () => clearInterval(detectInterval);
     }
 
-    useEffect(() => {
-        const setupCamera = async () => {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    width: { ideal: 3840 },
-                    height: { ideal: 2160 },
-                },
-            });
-            if (webcamRef.current) {
-                webcamRef.current.video!.srcObject = stream;
-                webcamRef.current.video!.onloadedmetadata = () => {
-                    setDimensions({
-                        width: webcamRef.current!.video!.videoWidth,
-                        height: webcamRef.current!.video!.videoHeight
-                    });
-                };
-            }
-        };
 
+    const setupCamera = async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: { ideal: 3840 },
+                height: { ideal: 2160 },
+            },
+        });
+        if (webcamRef.current) {
+            webcamRef.current.video!.srcObject = stream;
+        }
+    };
+
+    useEffect(() => {
         setupCamera();
         const cleanupCoco = runCoco();
 
@@ -106,10 +89,6 @@ const ObjectDetectionScreen = () => {
             cleanupCoco.then(cleanup => cleanup && cleanup());
         };
     }, [settings.inferenceFrequency]);
-
-    const handleSettingsChange = (newSettings: DetectionSettings) => {
-        setSettings(newSettings);
-    };
 
     if (!isLoaded) {
         return (
@@ -124,32 +103,24 @@ const ObjectDetectionScreen = () => {
     };
 
     return (
-        <div className={cn("mt-0 relative")}>
-            <div className={"relative w-full flex justify-center items-center gradient p-1.5 rounded-md"}>
-                {/* webcam */}
-                <Webcam
-                    ref={webcamRef}
-                    className={cn("rounded-md")}
-                    width={dimensions.width}
-                    height={dimensions.height}
-                    screenshotFormat="image/jpeg"
-                    audio={false} muted
-                />
-                {/* canvas */}
-                <canvas
-                    ref={canvasRef}
-                    className={cn("absolute rounded-md ")}
-                    width={dimensions.width}
-                    height={dimensions.height}
-                />
+        <div className={cn("relative flex h-screen")}>
+            {/* Left division - container for webcam and canvas */}
+            <div className={cn("relative")}>
+                <div className={cn("relative h-screen w-full")}>
+                    <Webcam
+                        ref={webcamRef}
+                        mirrored={mirrored}
+                        className={cn("h-full w-full object-contain p-2")}
+                    />
+                    <canvas
+                        ref={canvasRef}
+                        className={cn("absolute top-0 left-0 h-full w-full object-contain")}
+                    />
+                </div>
             </div>
-            <div className="absolute mt-[-5rem] py-2 px-4 w-full bg-accent/10 flex space-x-4">
-                <DetectionToolbox onSettingsChange={handleSettingsChange} />
-                <DetectionWidget
-                    detectionHistory={detectionHistory}
-                    currentStatus={currentStatus}
-                    detectedObjects={detectedObjects}
-                />
+
+            {/* Right division */}
+            <div className={cn("flex flex-row flex-1")}>
             </div>
         </div>
     );

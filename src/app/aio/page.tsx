@@ -11,8 +11,9 @@ export default function AIODHome()  {
         <main className={cn(
             "relative h-full w-full items-center justify-start flex flex-col",
         )}>
+            <ObjectDetectionScreen/>
+            {/* 
             <div className={cn("w-full h-full overflow-hidden")}>
-                <ObjectDetectionScreen/>
             </div>
             <div
                 className={"absolute bottom-0 right-0 mr-16 mb-0 flex flex-col z-40 w-48 items-center justify-center  bg-amber-50/20 rounded-2xl"}>
@@ -24,6 +25,7 @@ export default function AIODHome()  {
                     <span className={"bg-blue-500/20 px-2 rounded-full"}>Capricornio</span>
                 </h2>
             </div>
+            */}
         </main>
     )
 }
