@@ -32,8 +32,8 @@ const PoseModelSelect: React.FC<Props> = ({
         <SelectValue placeholder="Select pose model" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={POSE_RECOGNITION_MEDIAPIPE.toString()}>MediaPipe</SelectItem>
-        <SelectItem value={POSE_RECOGNITION_YOLO.toString()}>YOLO</SelectItem>
+        <SelectItem value={POSE_RECOGNITION_MEDIAPIPE.toString()}>Jupiter</SelectItem>
+        <SelectItem value={POSE_RECOGNITION_YOLO.toString()}>Calipso</SelectItem>
       </SelectContent>
     </Select>
   );

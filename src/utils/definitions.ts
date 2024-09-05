@@ -19,11 +19,11 @@ export type RunningMode = "IMAGE" | "VIDEO";
 export const RUNNING_MODE_IMAGE: RunningMode = "IMAGE";
 export const RUNNING_MODE_VIDEO: RunningMode = "VIDEO";
 
-export const OBJECT_DETECTION_STR: string = "Object Detection";
-export const FACE_DETECTION_STR: string = "Face Detection";
-export const GESTURE_RECOGNITION_STR: string = "Gesture Recognition";
-export const FACE_LANDMARK_DETECTION_STR: string = "Face Landmark Detection";
-export const POSE_RECOGNITION_STR = "Pose Recognition";
+export const OBJECT_DETECTION_STR: string = "Paciente";
+export const FACE_DETECTION_STR: string = "Rostros";
+export const GESTURE_RECOGNITION_STR: string = "Manos";
+export const FACE_LANDMARK_DETECTION_STR: string = "Reconocimiento";
+export const POSE_RECOGNITION_STR = "Postura";
 
 export const VIDEO_INPUT: string = "videoinput";
 
