@@ -1,10 +1,12 @@
+"use client";
+
 import React, { useState, useEffect, useRef } from "react";
 import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-webgl"; // set backend to webgl
 import Loader from "./components/loader";
 import ButtonHandler from "./components/btn-handler";
 import { detect, detectVideo } from "./utils/detect";
-import "./style/App.css";
+import "@/app/styles/App.css";
 
 const Screen = () => {
   const [loading, setLoading] = useState({ loading: true, progress: 0 }); // loading state
@@ -25,7 +27,7 @@ const Screen = () => {
   useEffect(() => {
     tf.ready().then(async () => {
       const yolov8 = await tf.loadGraphModel(
-        `${window.location.href}/${modelName}_web_model/model.json`,
+        `/models/${modelName}_web_model2/model.json`,
         {
           onProgress: (fractions) => {
             setLoading({ loading: true, progress: fractions }); // set loading fractions

@@ -1,4 +1,6 @@
-import "../style/loader.css";
+"use client";
+
+import "@/app/styles/loader.css";
 
 const Loader = (props) => {
   return (
