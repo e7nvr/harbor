@@ -87,4 +87,11 @@ export const ERROR_ENABLE_CAMERA_PERMISSION_MSG =
 export const ERROR_NO_CAMERA_DEVICE_AVAILABLE_MSG =
     "No Camera Device Available";
 
+// Add these new constants
+export const POSE_RECOGNITION_MEDIAPIPE = 0;
+export const POSE_RECOGNITION_YOLO = 1;
+
+
+// Add a new type for pose model selection
+export type PoseModelType = typeof POSE_RECOGNITION_MEDIAPIPE | typeof POSE_RECOGNITION_YOLO;
 

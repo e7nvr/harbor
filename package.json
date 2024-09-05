@@ -9,8 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@techstark/opencv-js": "^4.10.0-release.1",
-    "onnxruntime-web": "^1.19.2",
     "@ffmpeg/core": "^0.12.6",
     "@ffmpeg/ffmpeg": "^0.12.10",
     "@ffmpeg/util": "^0.12.1",
@@ -35,8 +33,11 @@
     "@radix-ui/react-toast": "^1.2.1",
     "@radix-ui/react-toggle-group": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.2",
+    "@techstark/opencv-js": "^4.10.0-release.1",
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow/tfjs": "^4.20.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.21.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.21.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
@@ -46,6 +47,7 @@
     "lucide-react": "^0.437.0",
     "next": "14.2.7",
     "next-themes": "^0.3.0",
+    "onnxruntime-web": "^1.19.2",
     "react": "^18",
     "react-dom": "^18",
     "react-hook-form": "^7.53.0",
