@@ -34,6 +34,7 @@ import {
     NO_MODE,
     OBJECT_DETECTION_MODE,
     POSE_RECOGNITION_MODE,
+    POSE_RECOGNITION_YOLO,
 } from "@/utils/definitions";
 import "@mediapipe/tasks-vision";
 import clsx from "clsx";
@@ -49,6 +50,10 @@ import { Rings } from "react-loader-spinner";
 import Webcam from "react-webcam";
 import { toast } from "sonner";
 import {Separator} from "@/components/ui/separator";
+import PoseModelSelect from "@/features/yyi/components/pose-model-changer/PoseModelSelect";
+import { POSE_RECOGNITION_MEDIAPIPE, PoseModelType } from "@/utils/definitions";
+import PoseRecognitionYOLO from "@/yolov/pose-recognition";
+import * as tf from '@tensorflow/tfjs';
 
 type Props = {};
 
@@ -70,6 +75,7 @@ const Home = (props: Props) => {
     const [loading, setLoading] = useState<boolean>(false);
     const [currentMode, setCurrentMode] = useState<number>(NO_MODE);
     const [animateDelay, setAnimateDelay] = useState<number | null>(150);
+    const [poseModel, setPoseModel] = useState<PoseModelType>(POSE_RECOGNITION_MEDIAPIPE);
 
     const takeScreenShot = () => {};
     const recordVideo = () => {
@@ -99,9 +105,12 @@ const Home = (props: Props) => {
                 GestureRecognition.initModel(vision),
                 FaceLandmarkDetection.initModel(vision),
                 PoseRecognition.initModel(vision),
+                PoseRecognitionYOLO.initModel(tf),
             ];
 
             const results = await Promise.all(models);
+            // console.log("Model initialization results:", results);
+
             const enabledModels = results.filter((result) => result.loadResult);
 
             if (enabledModels.length > 0) {
@@ -125,13 +134,66 @@ const Home = (props: Props) => {
         }
     };
 
-    const runPrediction = () => {
+    const runPrediction = async () => {
         if (
             webcamRef.current &&
             webcamRef.current.video &&
-            webcamRef.current.video.readyState === 4
+            webcamRef.current.video.readyState === 4 &&
+            canvas3dRef.current
         ) {
-            if (
+            const video = webcamRef.current.video;
+            const canvas = canvas3dRef.current;
+
+            // console.log("Video dimensions:", video.videoWidth, video.videoHeight);
+            // console.log("Canvas dimensions:", canvas.width, canvas.height);
+
+            if (currentMode === POSE_RECOGNITION_MODE) {
+                if (poseModel === POSE_RECOGNITION_YOLO && !PoseRecognitionYOLO.isModelUpdating()) {
+                    // console.log("Running YOLO pose detection");
+                    try {
+                        const results = await PoseRecognitionYOLO.detectPose(video);
+                        // console.log("YOLO detection results:", results);
+
+                        if (results && results.scores_data && results.scores_data.length > 0) {
+                            const { videoWidth, videoHeight } = video;
+                            Drawing3d.resizeCamera(videoWidth, videoHeight);
+                            // console.log("Camera resized to:", videoWidth, videoHeight);
+
+                            PoseRecognitionYOLO.draw(
+                                mirrored,
+                                results,
+                                videoWidth,
+                                videoHeight
+                            );
+                        } else {
+                            // console.log("No poses detected by YOLO");
+                        }
+                    } catch (error) {
+                        console.error("Error in YOLO pose detection:", error);
+                    }
+                } else if (poseModel === POSE_RECOGNITION_MEDIAPIPE && !PoseRecognition.isModelUpdating()) {
+                    const posePrediction = PoseRecognition.detectPose(
+                        webcamRef.current.video
+                    );
+
+                    if (posePrediction) {
+                        const canvas = canvas3dRef.current;
+                        const video = webcamRef.current?.video;
+
+                        if (canvas && video) {
+                            const { videoWidth, videoHeight } = video;
+                            Drawing3d.resizeCamera(videoWidth, videoHeight);
+
+                            PoseRecognition.draw(
+                                mirrored,
+                                posePrediction,
+                                videoWidth,
+                                videoHeight
+                            );
+                        }
+                    }
+                }
+            } else if (
                 currentMode === OBJECT_DETECTION_MODE &&
                 !ObjectDetection.isModelUpdating()
             ) {
@@ -226,31 +288,9 @@ const Home = (props: Props) => {
                         );
                     }
                 }
-            } else if (
-                currentMode === POSE_RECOGNITION_MODE &&
-                !PoseRecognition.isModelUpdating()
-            ) {
-                const posePrediction = PoseRecognition.detectPose(
-                    webcamRef.current.video
-                );
-
-                if (posePrediction) {
-                    const canvas = canvas3dRef.current;
-                    const video = webcamRef.current?.video;
-
-                    if (canvas && video) {
-                        const { videoWidth, videoHeight } = video;
-                        Drawing3d.resizeCamera(videoWidth, videoHeight);
-
-                        PoseRecognition.draw(
-                            mirrored,
-                            posePrediction,
-                            videoWidth,
-                            videoHeight
-                        );
-                    }
-                }
             }
+        } else {
+            console.log("Webcam or canvas not ready");
         }
     };
 
@@ -263,6 +303,10 @@ const Home = (props: Props) => {
             );
         }
         setCurrentMode(newMode);
+    };
+
+    const onPoseModelChange = (model: PoseModelType) => {
+        setPoseModel(model);
     };
 
     const canvas3dRefCallback = useCallback((element: any) => {
@@ -318,6 +362,14 @@ const Home = (props: Props) => {
             window.removeEventListener("beforeunload", cleanup);
         };
     }, []);
+
+    useEffect(() => {
+        if (webcamRef.current && webcamRef.current.video) {
+            const { videoWidth, videoHeight } = webcamRef.current.video;
+            Drawing3d.initScene(videoWidth, videoHeight);
+            console.log("Scene initialized with dimensions:", videoWidth, videoHeight);
+        }
+    }, [webcamRef.current]);
 
     useInterval({ callback: runPrediction, delay: animateDelay });
 
@@ -400,6 +452,13 @@ const Home = (props: Props) => {
                         {currentMode === FACE_LANDMARK_DETECTION_MODE && (
                             <FaceModelSelect
                                 currentMode={currentMode.toString()}
+                            />
+                        )}
+                        {currentMode === POSE_RECOGNITION_MODE && (
+                            <PoseModelSelect
+                                currentMode={currentMode.toString()}
+                                poseModel={poseModel}
+                                onPoseModelChange={onPoseModelChange}
                             />
                         )}
                         <ModelSelect
