@@ -7,13 +7,17 @@ interface DetectionOverlayProps {
   videoWidth: number;
   videoHeight: number;
   mirrored: boolean;
+  containerWidth: number;
+  containerHeight: number;
 }
 
 export const DetectionOverlay: React.FC<DetectionOverlayProps> = ({ 
   detections, 
   videoWidth, 
   videoHeight,
-  mirrored
+  mirrored,
+  containerWidth,
+  containerHeight
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -24,12 +28,22 @@ export const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Set canvas size to match container
+    canvas.width = containerWidth;
+    canvas.height = containerHeight;
+
     // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Set canvas size to match video
-    canvas.width = videoWidth;
-    canvas.height = videoHeight;
+    // Calculate scaling and positioning to match object-contain behavior
+    const scale = Math.min(containerWidth / videoWidth, containerHeight / videoHeight);
+    const scaledWidth = videoWidth * scale;
+    const scaledHeight = videoHeight * scale;
+    const offsetX = (containerWidth - scaledWidth) / 2;
+    const offsetY = (containerHeight - scaledHeight) / 2;
+
+    // Apply the scaling and positioning
+    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
 
     // Convert our Detection type to DetectedObject type
     const detectedObjects = detections.map(d => ({
@@ -40,7 +54,7 @@ export const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
 
     // Draw detections
     drawOnCanvas(mirrored, detectedObjects, ctx);
-  }, [detections, videoWidth, videoHeight, mirrored]);
+  }, [detections, videoWidth, videoHeight, mirrored, containerWidth, containerHeight]);
 
   return (
     <canvas

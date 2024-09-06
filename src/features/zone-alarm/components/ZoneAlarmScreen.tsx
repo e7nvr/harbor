@@ -28,6 +28,8 @@ const ZoneAlarmScreen: React.FC = () => {
     const [model, setModel] = useState<cocossd.ObjectDetection | null>(null);
     const [mirrored, setMirrored] = useState(true);
     const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
+    const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const handleEditorClose = () => {
         setIsEditing(false);
@@ -90,6 +92,22 @@ const ZoneAlarmScreen: React.FC = () => {
         detectFrame();
     }, [model, mediaMode]);
 
+    useEffect(() => {
+        const updateContainerSize = () => {
+            if (containerRef.current) {
+                setContainerSize({
+                    width: containerRef.current.clientWidth,
+                    height: containerRef.current.clientHeight
+                });
+            }
+        };
+
+        updateContainerSize();
+        window.addEventListener('resize', updateContainerSize);
+
+        return () => window.removeEventListener('resize', updateContainerSize);
+    }, []);
+
     const memoizedVideoView = useMemo(() => {
         if (mediaMode === 'video' && selectedFile) {
             return (
@@ -105,7 +123,7 @@ const ZoneAlarmScreen: React.FC = () => {
 
     return (
         <div className={cn("relative flex h-screen")}>
-            <div className={cn("relative flex-1")}>
+            <div ref={containerRef} className={cn("relative flex-1")}>
                 {mediaMode === 'camera' && <CameraView onClose={handleMediaClose} />}
                 {mediaMode === 'picture' && selectedFile && (
                     <PictureView file={selectedFile} onClose={handleMediaClose} />
@@ -124,6 +142,8 @@ const ZoneAlarmScreen: React.FC = () => {
                                 videoWidth={videoSize.width}
                                 videoHeight={videoSize.height}
                                 mirrored={mirrored}
+                                containerWidth={containerSize.width}
+                                containerHeight={containerSize.height}
                             />
                         )}
                     </>
