@@ -6,43 +6,35 @@ export function drawOnCanvas(
   ctx: CanvasRenderingContext2D
 ) {
   predictions.forEach((detectedObject: DetectedObject) => {
-    const { class: objectClass, bbox, score } = detectedObject;
+
+
+    const { class: name, bbox, score } = detectedObject;
+    // only draw if there are predictions are person class
+    if (name !== "person") return;
+
     const [x, y, width, height] = bbox;
 
-    ctx.beginPath();
+    if (ctx) {
+      ctx.beginPath();
 
-    // Estilo para personas
-    if (objectClass === "person") {
-      ctx.strokeStyle = "red";
-      ctx.lineWidth = 2;
-      ctx.fillStyle = "rgba(255, 0, 0, 0.2)"; // Rojo semi-transparente
-    } else {
-      // Estilo para otros objetos
-      ctx.strokeStyle = "green";
-      ctx.lineWidth = 2;
-      ctx.fillStyle = "rgba(0, 255, 0, 0.2)"; // Verde semi-transparente
+      // styling
+      ctx.fillStyle = name === "person" ? "#FF0F0F" : "#00B612";
+      ctx.globalAlpha = 0.2;
+
+      mirrored
+        ? ctx.roundRect(ctx.canvas.width - x, y, -width, height, 8)
+        : ctx.roundRect(x, y, width, height, 8);
+
+      // draw stroke or fill
+      ctx.fill();
+
+      // text styling
+      // ctx.font = "12px Courier New";
+      // ctx.fillStyle = 'black'
+      // ctx.globalAlpha = 1;
+      // mirrored
+      //   ? ctx.fillText(name, ctx.canvas.width - x -width + 10, y + 20)
+      //   : ctx.fillText(name, x + 10 , y + 20);
     }
-
-    // Dibujar el rectángulo
-    if (mirrored) {
-      ctx.rect(ctx.canvas.width - x - width, y, width, height);
-    } else {
-      ctx.rect(x, y, width, height);
-    }
-    ctx.fill(); // Rellenar el rectángulo con el color semi-transparente
-    ctx.stroke();
-
-    // Dibujar la etiqueta
-    ctx.font = "16px Arial";
-    const label = `${objectClass} (${Math.round(score * 100)}%)`;
-    const textWidth = ctx.measureText(label).width;
-    const textHeight = 16;
-    const textX = mirrored ? ctx.canvas.width - x - width : x;
-    const textY = y > textHeight ? y - textHeight : y + height + textHeight;
-
-    ctx.fillStyle = objectClass === "person" ? "rgba(255, 0, 0, 0.7)" : "rgba(0, 255, 0, 0.7)";
-    ctx.fillRect(textX, textY - textHeight, textWidth + 4, textHeight + 4);
-    ctx.fillStyle = "white";
-    ctx.fillText(label, textX + 2, textY);
   });
 }
