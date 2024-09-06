@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Pencil, Camera, Upload } from "lucide-react";
@@ -19,6 +19,7 @@ const ZoneAlarmScreen: React.FC = () => {
     const [currentPolygon, setCurrentPolygon] = useState<Vertex[]>([]);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null);
 
     const handleEditorClose = () => {
         setIsEditing(false);
@@ -46,6 +47,19 @@ const ZoneAlarmScreen: React.FC = () => {
         setSelectedFile(null);
     };
 
+    const memoizedVideoView = useMemo(() => {
+        if (mediaMode === 'video' && selectedFile) {
+            return (
+                <VideoView
+                    file={selectedFile}
+                    onClose={handleMediaClose}
+                    videoRef={videoRef}
+                />
+            );
+        }
+        return null;
+    }, [mediaMode, selectedFile]);
+
     return (
         <div className={cn("relative flex h-screen")}>
             <div className={cn("relative flex-1")}>
@@ -53,10 +67,8 @@ const ZoneAlarmScreen: React.FC = () => {
                 {mediaMode === 'picture' && selectedFile && (
                     <PictureView file={selectedFile} onClose={handleMediaClose} />
                 )}
-                {mediaMode === 'video' && selectedFile && (
-                    <VideoView file={selectedFile} onClose={handleMediaClose} />
-                )}
-                {!isEditing && <PolygonOverlay polygon={currentPolygon} />}
+                {memoizedVideoView}
+                {!isEditing && mediaMode && <PolygonOverlay polygon={currentPolygon} opacity={0.5} />}
                 {isEditing && (
                     <ZoneEditor
                         onClose={handleEditorClose}

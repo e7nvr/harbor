@@ -1,15 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface VideoViewProps {
   file: File;
   onClose: () => void;
+  videoRef: React.RefObject<HTMLVideoElement>;
 }
 
-export const VideoView: React.FC<VideoViewProps> = ({ file, onClose }) => {
+export const VideoView: React.FC<VideoViewProps> = ({ file, onClose, videoRef }) => {
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.src = URL.createObjectURL(file);
+    }
+  }, [file, videoRef]);
+
   return (
     <div className="relative w-full h-full">
       <video 
-        src={URL.createObjectURL(file)} 
+        ref={videoRef}
         controls 
         className="w-full h-full object-contain"
       />
