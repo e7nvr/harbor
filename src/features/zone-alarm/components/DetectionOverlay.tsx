@@ -68,6 +68,7 @@ export const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
     }));
 
     // Draw detections
+    // @ts-ignore
     drawOnCanvas(mirrored, detectedObjects, ctx);
   }, [detections, videoWidth, videoHeight, mirrored, containerWidth, containerHeight, zonePolygon]);
 
