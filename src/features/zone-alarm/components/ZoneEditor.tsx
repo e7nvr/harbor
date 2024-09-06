@@ -104,6 +104,7 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({ onClose, initialPolygon,
                         {...getPolygonStyle()}
                         onMouseDown={(e: React.MouseEvent<SVGPolygonElement>) => {
                             if (editorState === EditorState.Moving) {
+                                //@ts-ignore
                                 handleMouseDown(getMousePosition(e));
                             }
                         }}
@@ -119,6 +120,7 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({ onClose, initialPolygon,
                         fill={editorState === EditorState.Editing ? "red" : "blue"}
                         onMouseDown={(e: React.MouseEvent<SVGCircleElement>) => {
                             if (editorState === EditorState.Editing) {
+                                //@ts-ignore
                                 handleMouseDown(getMousePosition(e), index);
                             }
                         }}
