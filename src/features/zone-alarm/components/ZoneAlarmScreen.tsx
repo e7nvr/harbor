@@ -9,6 +9,7 @@ import { ZoneEditor } from './ZoneEditor';
 import { CameraView } from './CameraView';
 import { PictureView } from './PictureView';
 import { VideoView } from './VideoView';
+import {PolygonOverlay} from "@/features/zone-alarm/components/PolygonOverlay";
 
 const ZoneAlarmScreen: React.FC = () => {
     const [screenState, setScreenState] = useState<ScreenState>(ScreenState.Idle);
@@ -57,16 +58,6 @@ const ZoneAlarmScreen: React.FC = () => {
                         onSave={handlePolygonSave}
                     />
                 )}
-                {screenState === ScreenState.Idle && currentPolygon.length > 0 && (
-                    <svg className="w-full h-full">
-                        <polygon
-                            points={currentPolygon.map(v => `${v.x},${v.y}`).join(' ')}
-                            fill="rgba(0, 0, 255, 0.2)"
-                            stroke="blue"
-                            strokeWidth={2}
-                        />
-                    </svg>
-                )}
                 {screenState === ScreenState.Camera && (
                     <CameraView onClose={handleEditorClose} />
                 )}
@@ -75,6 +66,9 @@ const ZoneAlarmScreen: React.FC = () => {
                 )}
                 {screenState === ScreenState.Video && selectedFile && (
                     <VideoView file={selectedFile} onClose={handleEditorClose} />
+                )}
+                {screenState !== ScreenState.Drawing && (
+                    <PolygonOverlay polygon={currentPolygon} />
                 )}
             </div>
             <div className={cn("flex flex-col gap-2 p-4 border-l border-gray-200 dark:border-gray-700")}>

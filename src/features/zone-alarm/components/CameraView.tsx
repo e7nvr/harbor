@@ -40,7 +40,7 @@ export const CameraView: React.FC<CameraViewProps> = ({ onClose }) => {
       />
       <button 
         onClick={onClose}
-        className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-full"
+        className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-full z-10"
       >
         Cerrar
       </button>
