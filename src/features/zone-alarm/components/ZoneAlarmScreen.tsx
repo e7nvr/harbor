@@ -68,7 +68,13 @@ const ZoneAlarmScreen: React.FC = () => {
                     <PictureView file={selectedFile} onClose={handleMediaClose} />
                 )}
                 {memoizedVideoView}
-                {!isEditing && mediaMode && <PolygonOverlay polygon={currentPolygon} opacity={0.5} />}
+                {!isEditing && mediaMode && (
+                    <PolygonOverlay 
+                        polygon={currentPolygon} 
+                        opacity={0.3} 
+                        filterRed={true}
+                    />
+                )}
                 {isEditing && (
                     <ZoneEditor
                         onClose={handleEditorClose}
