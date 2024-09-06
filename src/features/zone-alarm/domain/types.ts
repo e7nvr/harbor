@@ -35,6 +35,7 @@ export interface Detection {
   width: number;
   height: number;
   confidence: number;
+  class: string;  // Añadimos esta propiedad
 }
 
 

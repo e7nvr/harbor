@@ -30,7 +30,7 @@ export function getIntersectionArea(bbox: [number, number, number, number], poly
   for (let px = x; px < x + width; px += step) {
     for (let py = y; py < y + height; py += step) {
       if (isPointInPolygon({x: px, y: py}, polygon)) {
-        console.log('point in polygon', {x: px, y: py});
+        // console.log('point in polygon', {x: px, y: py});
         intersectionArea += step * step;
       }
     }
@@ -43,11 +43,31 @@ export function getIntersectionArea(bbox: [number, number, number, number], poly
 export function isDetectionInZone(
   detection: { bbox: [number, number, number, number] },
   polygon: Vertex[],
-  threshold: number = 0.3 // 30% de intersección por defecto
+  videoWidth: number,
+  videoHeight: number,
+  containerWidth: number,
+  containerHeight: number,
+  threshold: number = 0.3
 ): boolean {
   const [x, y, width, height] = detection.bbox;
-  const bboxArea = width * height;
-  const intersectionArea = getIntersectionArea(detection.bbox, polygon);
+  
+  // Calcular la escala y el offset
+  const scale = Math.min(containerWidth / videoWidth, containerHeight / videoHeight);
+  const scaledVideoWidth = videoWidth * scale;
+  const scaledVideoHeight = videoHeight * scale;
+  const offsetX = (containerWidth - scaledVideoWidth) / 2;
+  const offsetY = (containerHeight - scaledVideoHeight) / 2;
+
+  // Ajustar las coordenadas del bounding box solo para la comparación con el polígono
+  const adjustedBbox: [number, number, number, number] = [
+    x * scale + offsetX,
+    y * scale + offsetY,
+    width * scale,
+    height * scale
+  ];
+
+  const bboxArea = width * height * scale * scale;
+  const intersectionArea = getIntersectionArea(adjustedBbox, polygon);
   
   return intersectionArea / bboxArea > threshold;
 }

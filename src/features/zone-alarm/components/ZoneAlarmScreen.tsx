@@ -83,6 +83,7 @@ const ZoneAlarmScreen: React.FC = () => {
                     width: pred.bbox[2],
                     height: pred.bbox[3],
                     confidence: pred.score,
+                    class: pred.class  // Añadimos la clase aquí
                 }));
                 setDetections(newDetections);
             }

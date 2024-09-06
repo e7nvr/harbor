@@ -45,12 +45,19 @@ export const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
     const offsetX = (containerWidth - scaledWidth) / 2;
     const offsetY = (containerHeight - scaledHeight) / 2;
 
-    // Apply the scaling and positioning
+    // Apply the scaling and positioning for drawing
     ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
 
-    // Filter detections that are in the zone
+    // Filter detections that are people and in the zone
     const filteredDetections = detections.filter(d => 
-      isDetectionInZone({ bbox: [d.x, d.y, d.width, d.height] }, zonePolygon)
+      d.class === 'person' && isDetectionInZone(
+        { bbox: [d.x, d.y, d.width, d.height] },
+        zonePolygon,
+        videoWidth,
+        videoHeight,
+        containerWidth,
+        containerHeight
+      )
     );
 
     // Convert our Detection type to DetectedObject type
