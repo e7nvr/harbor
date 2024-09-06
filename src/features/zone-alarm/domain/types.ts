@@ -12,11 +12,11 @@ export enum EditorState {
 }
 
 export enum ScreenState {
-  Idle = "idle",
-  Drawing = "drawing",
-  Editing = "editing",
-  Moving = "moving",
-  Detecting = "detecting"
+  Idle,
+  Drawing,
+  Camera,
+  Picture,
+  Video
 }
 
 // Opcionalmente, podríamos añadir un tipo para las propiedades del ZoneEditor
