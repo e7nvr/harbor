@@ -144,6 +144,7 @@ const ZoneAlarmScreen: React.FC = () => {
                                 mirrored={mirrored}
                                 containerWidth={containerSize.width}
                                 containerHeight={containerSize.height}
+                                zonePolygon={currentPolygon} // Pasamos el polígono de la zona
                             />
                         )}
                     </>

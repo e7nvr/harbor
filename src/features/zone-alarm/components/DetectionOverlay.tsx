@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
-import { Detection } from '../domain/types';
+import { Detection, Vertex } from '../domain/types';
 import { drawOnCanvas } from '@/lib/draw-utils';
+import { isDetectionInZone } from '@/lib/geometry-utils';
 
 interface DetectionOverlayProps {
   detections: Detection[];
@@ -9,6 +10,7 @@ interface DetectionOverlayProps {
   mirrored: boolean;
   containerWidth: number;
   containerHeight: number;
+  zonePolygon: Vertex[]; // Nuevo prop para el polígono de la zona
 }
 
 export const DetectionOverlay: React.FC<DetectionOverlayProps> = ({ 
@@ -17,7 +19,8 @@ export const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
   videoHeight,
   mirrored,
   containerWidth,
-  containerHeight
+  containerHeight,
+  zonePolygon
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -45,8 +48,13 @@ export const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
     // Apply the scaling and positioning
     ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
 
+    // Filter detections that are in the zone
+    const filteredDetections = detections.filter(d => 
+      isDetectionInZone({ bbox: [d.x, d.y, d.width, d.height] }, zonePolygon)
+    );
+
     // Convert our Detection type to DetectedObject type
-    const detectedObjects = detections.map(d => ({
+    const detectedObjects = filteredDetections.map(d => ({
       bbox: [d.x, d.y, d.width, d.height],
       class: 'person',
       score: d.confidence
@@ -54,7 +62,7 @@ export const DetectionOverlay: React.FC<DetectionOverlayProps> = ({
 
     // Draw detections
     drawOnCanvas(mirrored, detectedObjects, ctx);
-  }, [detections, videoWidth, videoHeight, mirrored, containerWidth, containerHeight]);
+  }, [detections, videoWidth, videoHeight, mirrored, containerWidth, containerHeight, zonePolygon]);
 
   return (
     <canvas
