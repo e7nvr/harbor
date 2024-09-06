@@ -27,4 +27,14 @@ export interface ZoneEditorProps {
   onSave: (polygon: Vertex[]) => void;
 }
 
+// Añade esto a tu archivo de tipos existente
+export interface Detection {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  confidence: number;
+}
+
 
