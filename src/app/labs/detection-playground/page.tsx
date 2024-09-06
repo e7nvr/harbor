@@ -54,6 +54,10 @@ import PoseModelSelect from "@/features/yyi/components/pose-model-changer/PoseMo
 import { POSE_RECOGNITION_MEDIAPIPE, PoseModelType } from "@/utils/definitions";
 import PoseRecognitionYOLO from "@/yolov/pose-recognition";
 import * as tf from '@tensorflow/tfjs';
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { InfoIcon } from "lucide-react";
+import {cn} from "@/lib/utils";
 
 type Props = {};
 
@@ -76,6 +80,7 @@ const Home = (props: Props) => {
     const [currentMode, setCurrentMode] = useState<number>(NO_MODE);
     const [animateDelay, setAnimateDelay] = useState<number | null>(150);
     const [poseModel, setPoseModel] = useState<PoseModelType>(POSE_RECOGNITION_MEDIAPIPE);
+    const [showInfo, setShowInfo] = useState(false);
 
     const takeScreenShot = () => {};
     const recordVideo = () => {
@@ -374,7 +379,7 @@ const Home = (props: Props) => {
     useInterval({ callback: runPrediction, delay: animateDelay });
 
     return (
-        <div className="flex flex-col h-screen w-screen items-center">
+        <div className="flex flex-col h-screen w-screen items-center relative">
             {/* Camera area */}
             <div
                 className={clsx(
@@ -482,6 +487,39 @@ const Home = (props: Props) => {
                     </div>
                 </div>
             </div>
+            {/* Flotante con información de YYI */}
+            <div className={cn(
+                "absolute top-4 left-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg",
+                "transition-opacity duration-300 max-w-md z-50",
+                showInfo ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}>
+                <h2 className="text-xl font-bold mb-2">🧘‍♀️ YYI: Your Yoga Instructor</h2>
+                <p className="mb-2">Explora el mundo de la detección de poses y más 🕺💃</p>
+                <p>
+                    En este playground, puedes:
+                </p>
+                <ul className="list-disc list-inside mt-2">
+                    <li>Detectar poses de yoga y ejercicios 🧘‍♂️🏋️‍♀️</li>
+                    <li>Reconocer gestos y movimientos 👋✌️</li>
+                    <li>Identificar objetos en tiempo real 🚗🐱</li>
+                    <li>Detectar rostros y expresiones 😊😲</li>
+                    <li>Experimentar con diferentes modelos de IA 🤖🧠</li>
+                </ul>
+                <p className="mt-2">
+                    ¡Conviértete en un maestro de la detección y diviértete explorando las posibilidades! 🎭🔍
+                </p>
+            </div>
+
+            {/* Botón de información */}
+            <Button
+                className="absolute top-4 right-4 z-50"
+                variant="outline"
+                size="icon"
+                onClick={() => setShowInfo(!showInfo)}
+            >
+                <InfoIcon />
+            </Button>
+
             {loading && (
                 <div
                     className={clsx(

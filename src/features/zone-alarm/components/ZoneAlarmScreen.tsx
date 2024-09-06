@@ -3,7 +3,7 @@
 import React, { useState, useRef, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {Pencil, Camera, Upload, FlipHorizontalIcon} from "lucide-react";
+import { Pencil, Camera, Upload, FlipHorizontalIcon, InfoIcon } from "lucide-react";
 import { Vertex, Detection } from '../domain/types';
 import { ZoneEditor } from './ZoneEditor';
 import { CameraView } from './CameraView';
@@ -30,6 +30,7 @@ const ZoneAlarmScreen: React.FC = () => {
     const [videoSize, setVideoSize] = useState({ width: 0, height: 0 });
     const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
     const containerRef = useRef<HTMLDivElement>(null);
+    const [showInfo, setShowInfo] = useState(false);
 
     const handleEditorClose = () => {
         setIsEditing(false);
@@ -157,7 +158,31 @@ const ZoneAlarmScreen: React.FC = () => {
                         onSave={handlePolygonSave}
                     />
                 )}
+                {/* Flotante con título y descripción */}
+                <div className={cn(
+                    "absolute top-4 left-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg",
+                    "transition-opacity duration-300 max-w-md",
+                    showInfo ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}>
+                    <h2 className="text-xl font-bold mb-2">🎨🔔 Lienzo de Alarmas</h2>
+                    <p className="mb-2">Pinta zonas, detecta gente 🖌️🚶‍♀️</p>
+                    <p>
+                        Aquí puedes dibujar zonas (🖌️✏️🖍️) y detectar personas (👀🕵️‍♀️🔍) en esas áreas, 
+                        todo mientras usas cámara o video (📹🎥). ¡Conviértete en el artista de la seguridad!
+                    </p>
+                </div>
+
+                {/* Botón de información */}
+                <Button
+                    className="absolute top-4 right-4"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowInfo(!showInfo)}
+                >
+                    <InfoIcon />
+                </Button>
             </div>
+
             <div className={cn("flex flex-col gap-2 p-4 border-l border-gray-200 dark:border-gray-700")}>
                 <Button 
                     onClick={() => setIsEditing(!isEditing)}

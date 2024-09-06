@@ -6,7 +6,7 @@ import Webcam from "react-webcam";
 import {
     CameraIcon,
     FlipHorizontal,
-    FlipHorizontalIcon,
+    FlipHorizontalIcon, InfoIcon,
     MoonIcon,
     PersonStanding,
     SunIcon,
@@ -64,6 +64,8 @@ const KouScreen = () => {
     const [loading, setLoading] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [ffmpegLoaded, setFfmpegLoaded] = useState(false);
+
+    const [showInfo, setShowInfo] = useState(false);
 
 
     /*****************************************************************
@@ -329,6 +331,9 @@ const KouScreen = () => {
                 </a>
                 <a href="/labs/alarm-zone" target="_blank" rel="noopener noreferrer">
                     🚨 Zona de Alarma: ¡No te salgas del cuadro o sufrirás las consecuencias sonoras!
+                </a>
+                <a href="/labs/zone-alarm" target="_blank" rel="noopener noreferrer">
+                    🎨🔔 Lienzo de Alarmas: Pinta zonas, detecta gente 🖌️🚶‍♀️
                 </a>
 
                 {/* 
@@ -599,6 +604,39 @@ const KouScreen = () => {
                     </div>
 
                 </div>
+
+                {/* Flotante con información de Kou */}
+                <div className={cn(
+                    "absolute top-4 left-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg",
+                    "transition-opacity duration-300 max-w-md",
+                    showInfo ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}>
+                    <h2 className="text-xl font-bold mb-2">🦉 Kou: Tu Vigilante Inteligente</h2>
+                    <p className="mb-2">Detección automática y grabación inteligente 🎥🧠</p>
+                    <p>
+                        Con Kou, puedes:
+                    </p>
+                    <ul className="list-disc list-inside mt-2">
+                        <li>Detectar personas automáticamente 🕵️‍♀️👀</li>
+                        <li>Grabar clips cuando se detecta movimiento 📹🎬</li>
+                        <li>Tomar fotos instantáneas 📸✨</li>
+                        <li>Ajustar la sensibilidad de las alertas 🔧🚨</li>
+                        <li>Recibir notificaciones en tiempo real 📱🔔</li>
+                    </ul>
+                    <p className="mt-2">
+                        ¡Deja que Kou cuide tu espacio mientras tú te relajas! 🛋️😎
+                    </p>
+                </div>
+
+                {/* Botón de información */}
+                <Button
+                    className="absolute top-4 right-4"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowInfo(!showInfo)}
+                >
+                    <InfoIcon />
+                </Button>
 
             </div>
         );
