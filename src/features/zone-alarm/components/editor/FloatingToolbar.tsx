@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { X, Edit2, Hand, RotateCcw, Save } from "lucide-react";
+import { X, Edit2, Hand, RotateCcw, Save, PenTool } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EditorState } from '../../domain/types';
 
@@ -26,6 +26,14 @@ const FloatingToolbar: React.FC<FloatingToolbarProps> = ({
   return (
     <div className={cn("absolute top-4 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 p-2 rounded-md shadow-md")}>
       <div className="flex items-center space-x-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setEditorState(EditorState.Drawing)} 
+          disabled={editorState === EditorState.Drawing}
+        >
+          <PenTool className="h-4 w-4 mr-1" /> Dibujar
+        </Button>
         <Button 
           variant="ghost" 
           size="sm" 

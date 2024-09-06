@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { EditorState, ScreenState, Vertex } from '../domain/types';
+import { EditorState, Vertex } from '../domain/types';
 import { usePolygonEditor } from '../hooks/usePolygonEditor';
 import FloatingToolbar from './editor/FloatingToolbar';
 import { savePolygon as savePolygonService } from '../services/polygonService';
@@ -7,16 +7,13 @@ import { toast } from "@/components/ui/use-toast";
 
 interface ZoneEditorProps {
     onClose: () => void;
-    initialState: ScreenState;
     initialPolygon?: Vertex[];
     onSave: (polygon: Vertex[]) => void;
 }
 
-export const ZoneEditor: React.FC<ZoneEditorProps> = ({ onClose, initialState, initialPolygon, onSave }) => {
+export const ZoneEditor: React.FC<ZoneEditorProps> = ({ onClose, initialPolygon, onSave }) => {
     const {
         polygon,
-        setPolygon,
-        handleCanvasClick,
         handleMouseDown,
         handleMouseMove,
         handleMouseUp,
@@ -29,10 +26,6 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({ onClose, initialState, i
     } = usePolygonEditor(initialPolygon);
 
     const [isSaving, setIsSaving] = useState(false);
-
-    useEffect(() => {
-        setEditorState(initialState === ScreenState.Drawing ? EditorState.Drawing : EditorState.Editing);
-    }, [initialState, setEditorState]);
 
     const getMousePosition = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();
@@ -56,8 +49,7 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({ onClose, initialState, i
                 title: "Éxito",
                 description: "Polígono guardado correctamente.",
             });
-            onSave(polygon);  // Llamar a onSave con el polígono actualizado
-            onClose();
+            onSave(polygon);
         } catch (error) {
             toast({
                 title: "Error",
@@ -69,13 +61,11 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({ onClose, initialState, i
         }
     };
 
-    const getPolygonStyle = () => {
-        return {
-            fill: "rgba(0, 0, 255, 0.2)",
-            stroke: "blue",
-            strokeWidth: 2,
-        };
-    };
+    const getPolygonStyle = () => ({
+        fill: "rgba(0, 0, 255, 0.2)",
+        stroke: "blue",
+        strokeWidth: 2,
+    });
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -91,7 +81,7 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({ onClose, initialState, i
     }, [handleKeyDown]);
 
     return (
-        <>
+        <div className="absolute inset-0 z-10">
             <svg
                 className="w-full h-full"
                 onClick={(e) => {
@@ -114,7 +104,6 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({ onClose, initialState, i
                         {...getPolygonStyle()}
                         onMouseDown={(e: React.MouseEvent<SVGPolygonElement>) => {
                             if (editorState === EditorState.Moving) {
-                                //@ts-ignore
                                 handleMouseDown(getMousePosition(e));
                             }
                         }}
@@ -130,7 +119,6 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({ onClose, initialState, i
                         fill={editorState === EditorState.Editing ? "red" : "blue"}
                         onMouseDown={(e: React.MouseEvent<SVGCircleElement>) => {
                             if (editorState === EditorState.Editing) {
-                                //@ts-ignore
                                 handleMouseDown(getMousePosition(e), index);
                             }
                         }}
@@ -152,6 +140,6 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({ onClose, initialState, i
                 isPolygonComplete={isPolygonComplete || polygon.length > 2}
                 isSaving={isSaving}
             />
-        </>
+        </div>
     );
 };
